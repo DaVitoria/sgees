@@ -1,9 +1,20 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Calendar, ClipboardCheck, BarChart3, FileCheck } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Pedagogico = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
   const modules = [
     {
       title: "Gestão de Turmas",
@@ -41,6 +52,20 @@ const Pedagogico = () => {
       bgColor: "bg-primary/10",
     },
   ];
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-muted-foreground">A carregar...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <Layout>

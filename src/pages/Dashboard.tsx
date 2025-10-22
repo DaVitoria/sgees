@@ -1,8 +1,19 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, DollarSign, TrendingUp } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Dashboard = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
   const stats = [
     {
       title: "Total de Alunos",
@@ -33,6 +44,20 @@ const Dashboard = () => {
       bgColor: "bg-warning/10",
     },
   ];
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-muted-foreground">A carregar...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <Layout>

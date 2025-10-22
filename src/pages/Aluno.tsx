@@ -1,9 +1,20 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { User, BookOpen, Award, FileText } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Aluno = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
   // Dados simulados do aluno
   const aluno = {
     nome: "João Manuel Silva",
@@ -20,6 +31,20 @@ const Aluno = () => {
     { nome: "Química", nota1: 15, nota2: 16, nota3: 14, media: 15 },
     { nome: "Biologia", nota1: 17, nota2: 16, nota3: 18, media: 17 },
   ];
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-muted-foreground">A carregar...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <Layout>
