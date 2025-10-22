@@ -11,6 +11,11 @@ import Administrativo from "./pages/Administrativo";
 import Pedagogico from "./pages/Pedagogico";
 import Aluno from "./pages/Aluno";
 import NotFound from "./pages/NotFound";
+import GestaoDeTurmas from "./pages/pedagogico/GestaoDeTurmas";
+import AtribuicaoDisciplinas from "./pages/pedagogico/AtribuicaoDisciplinas";
+import LancamentoNotas from "./pages/pedagogico/LancamentoNotas";
+import RelatoriosPedagogicos from "./pages/pedagogico/RelatoriosPedagogicos";
+import Aprovacoes from "./pages/pedagogico/Aprovacoes";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +32,11 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/administrativo" element={<Administrativo />} />
             <Route path="/pedagogico" element={<Pedagogico />} />
+            <Route path="/pedagogico/gestao-turmas" element={<GestaoDeTurmas />} />
+            <Route path="/pedagogico/atribuicao-disciplinas" element={<AtribuicaoDisciplinas />} />
+            <Route path="/pedagogico/lancamento-notas" element={<LancamentoNotas />} />
+            <Route path="/pedagogico/relatorios" element={<RelatoriosPedagogicos />} />
+            <Route path="/pedagogico/aprovacoes" element={<Aprovacoes />} />
             <Route path="/aluno" element={<Aluno />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

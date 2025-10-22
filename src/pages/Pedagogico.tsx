@@ -22,6 +22,7 @@ const Pedagogico = () => {
       icon: BookOpen,
       color: "text-primary",
       bgColor: "bg-primary/10",
+      route: "/pedagogico/gestao-turmas",
     },
     {
       title: "Atribuição de Disciplinas",
@@ -29,6 +30,7 @@ const Pedagogico = () => {
       icon: Calendar,
       color: "text-accent",
       bgColor: "bg-accent/10",
+      route: "/pedagogico/atribuicao-disciplinas",
     },
     {
       title: "Lançamento de Notas",
@@ -36,6 +38,7 @@ const Pedagogico = () => {
       icon: ClipboardCheck,
       color: "text-success",
       bgColor: "bg-success/10",
+      route: "/pedagogico/lancamento-notas",
     },
     {
       title: "Relatórios Pedagógicos",
@@ -43,6 +46,7 @@ const Pedagogico = () => {
       icon: BarChart3,
       color: "text-warning",
       bgColor: "bg-warning/10",
+      route: "/pedagogico/relatorios",
     },
     {
       title: "Aprovações",
@@ -50,6 +54,7 @@ const Pedagogico = () => {
       icon: FileCheck,
       color: "text-primary",
       bgColor: "bg-primary/10",
+      route: "/pedagogico/aprovacoes",
     },
   ];
 
@@ -90,7 +95,7 @@ const Pedagogico = () => {
                   <CardDescription>{module.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full">Aceder</Button>
+                  <Button className="w-full" onClick={() => navigate(module.route)}>Aceder</Button>
                 </CardContent>
               </Card>
             );
