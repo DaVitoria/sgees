@@ -118,6 +118,53 @@ export type Database = {
         }
         Relationships: []
       }
+      documentos: {
+        Row: {
+          aluno_id: string | null
+          created_at: string | null
+          data_geracao: string | null
+          descricao: string | null
+          gerado_por: string | null
+          id: string
+          tipo: string
+          titulo: string
+          url_ficheiro: string | null
+          user_id: string | null
+        }
+        Insert: {
+          aluno_id?: string | null
+          created_at?: string | null
+          data_geracao?: string | null
+          descricao?: string | null
+          gerado_por?: string | null
+          id?: string
+          tipo: string
+          titulo: string
+          url_ficheiro?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          aluno_id?: string | null
+          created_at?: string | null
+          data_geracao?: string | null
+          descricao?: string | null
+          gerado_por?: string | null
+          id?: string
+          tipo?: string
+          titulo?: string
+          url_ficheiro?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financas: {
         Row: {
           aluno_id: string | null
@@ -161,6 +208,136 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funcionarios: {
+        Row: {
+          cargo: string
+          created_at: string | null
+          data_admissao: string | null
+          departamento: string | null
+          id: string
+          numero_funcionario: string
+          user_id: string
+        }
+        Insert: {
+          cargo: string
+          created_at?: string | null
+          data_admissao?: string | null
+          departamento?: string | null
+          id?: string
+          numero_funcionario: string
+          user_id: string
+        }
+        Update: {
+          cargo?: string
+          created_at?: string | null
+          data_admissao?: string | null
+          departamento?: string | null
+          id?: string
+          numero_funcionario?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      inventario: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          data_aquisicao: string | null
+          descricao: string | null
+          estado: string | null
+          id: string
+          localizacao: string | null
+          nome: string
+          quantidade: number
+          responsavel_id: string | null
+          updated_at: string | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          data_aquisicao?: string | null
+          descricao?: string | null
+          estado?: string | null
+          id?: string
+          localizacao?: string | null
+          nome: string
+          quantidade?: number
+          responsavel_id?: string | null
+          updated_at?: string | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          data_aquisicao?: string | null
+          descricao?: string | null
+          estado?: string | null
+          id?: string
+          localizacao?: string | null
+          nome?: string
+          quantidade?: number
+          responsavel_id?: string | null
+          updated_at?: string | null
+          valor_unitario?: number | null
+        }
+        Relationships: []
+      }
+      matriculas: {
+        Row: {
+          aluno_id: string
+          ano_lectivo_id: string
+          created_at: string | null
+          data_matricula: string
+          estado: string | null
+          id: string
+          observacoes: string | null
+          turma_id: string | null
+        }
+        Insert: {
+          aluno_id: string
+          ano_lectivo_id: string
+          created_at?: string | null
+          data_matricula?: string
+          estado?: string | null
+          id?: string
+          observacoes?: string | null
+          turma_id?: string | null
+        }
+        Update: {
+          aluno_id?: string
+          ano_lectivo_id?: string
+          created_at?: string | null
+          data_matricula?: string
+          estado?: string | null
+          id?: string
+          observacoes?: string | null
+          turma_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matriculas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matriculas_ano_lectivo_id_fkey"
+            columns: ["ano_lectivo_id"]
+            isOneToOne: false
+            referencedRelation: "anos_lectivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matriculas_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
             referencedColumns: ["id"]
           },
         ]
@@ -393,6 +570,42 @@ export type Database = {
           nome_completo?: string
           telefone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      relatorios: {
+        Row: {
+          conteudo: Json | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          conteudo?: Json | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          tipo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          conteudo?: Json | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          tipo?: string
+          titulo?: string
+          user_id?: string
         }
         Relationships: []
       }
