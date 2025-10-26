@@ -91,7 +91,10 @@ const RelatoriosPedagogicos = () => {
 
       const { data: notas, error: notasError } = await supabase
         .from("notas")
-        .select("*, disciplinas(nome)")
+        .select(`
+          *,
+          disciplina:disciplinas!notas_disciplina_id_fkey(nome)
+        `)
         .in("aluno_id", alunoIds);
 
       if (notasError) throw notasError;
@@ -104,7 +107,7 @@ const RelatoriosPedagogicos = () => {
 
       const disciplinasMap = new Map();
       notas?.forEach((nota) => {
-        const disc = nota.disciplinas?.nome;
+        const disc = (nota.disciplina as any)?.nome;
         if (!disc || !nota.media) return;
         
         if (!disciplinasMap.has(disc)) {

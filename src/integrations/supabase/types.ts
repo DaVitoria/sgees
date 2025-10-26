@@ -59,6 +59,20 @@ export type Database = {
             referencedRelation: "turmas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_alunos_turma_id"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_alunos_user_id"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       anos_lectivos: {
@@ -163,6 +177,27 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_documentos_aluno_id"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_documentos_gerado_por"
+            columns: ["gerado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_documentos_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       financas: {
@@ -210,6 +245,20 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_financas_aluno_id"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_financas_registado_por"
+            columns: ["registado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       funcionarios: {
@@ -240,7 +289,15 @@ export type Database = {
           numero_funcionario?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_funcionarios_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       inventario: {
         Row: {
@@ -285,7 +342,15 @@ export type Database = {
           updated_at?: string | null
           valor_unitario?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_inventario_responsavel_id"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       matriculas: {
         Row: {
@@ -319,6 +384,27 @@ export type Database = {
           turma_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_matriculas_aluno_id"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_matriculas_ano_lectivo_id"
+            columns: ["ano_lectivo_id"]
+            isOneToOne: false
+            referencedRelation: "anos_lectivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_matriculas_turma_id"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "matriculas_aluno_id_fkey"
             columns: ["aluno_id"]
@@ -390,6 +476,34 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_notas_aluno_id"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_notas_ano_lectivo_id"
+            columns: ["ano_lectivo_id"]
+            isOneToOne: false
+            referencedRelation: "anos_lectivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_notas_disciplina_id"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_notas_lancado_por"
+            columns: ["lancado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "notas_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
@@ -446,7 +560,15 @@ export type Database = {
           titulo?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_noticias_autor_id"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       professor_disciplinas: {
         Row: {
@@ -474,6 +596,34 @@ export type Database = {
           turma_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_professor_disciplinas_ano_lectivo_id"
+            columns: ["ano_lectivo_id"]
+            isOneToOne: false
+            referencedRelation: "anos_lectivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_professor_disciplinas_disciplina_id"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_professor_disciplinas_professor_id"
+            columns: ["professor_id"]
+            isOneToOne: false
+            referencedRelation: "professores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_professor_disciplinas_turma_id"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "professor_disciplinas_ano_lectivo_id_fkey"
             columns: ["ano_lectivo_id"]
@@ -535,7 +685,15 @@ export type Database = {
           numero_funcionario?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_professores_user_id"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -607,7 +765,15 @@ export type Database = {
           titulo?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_relatorios_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       turmas: {
         Row: {
@@ -635,6 +801,13 @@ export type Database = {
           nome?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_turmas_ano_lectivo_id"
+            columns: ["ano_lectivo_id"]
+            isOneToOne: false
+            referencedRelation: "anos_lectivos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "turmas_ano_lectivo_id_fkey"
             columns: ["ano_lectivo_id"]
