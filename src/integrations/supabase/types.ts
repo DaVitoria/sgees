@@ -53,21 +53,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "alunos_turma_id_fkey"
+            foreignKeyName: "fk_alunos_turma"
             columns: ["turma_id"]
             isOneToOne: false
             referencedRelation: "turmas"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_alunos_turma_id"
-            columns: ["turma_id"]
-            isOneToOne: false
-            referencedRelation: "turmas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_alunos_user_id"
+            foreignKeyName: "fk_alunos_user"
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
@@ -476,21 +469,21 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_notas_aluno_id"
+            foreignKeyName: "fk_notas_aluno"
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_notas_ano_lectivo_id"
+            foreignKeyName: "fk_notas_ano_lectivo"
             columns: ["ano_lectivo_id"]
             isOneToOne: false
             referencedRelation: "anos_lectivos"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_notas_disciplina_id"
+            foreignKeyName: "fk_notas_disciplina"
             columns: ["disciplina_id"]
             isOneToOne: false
             referencedRelation: "disciplinas"
@@ -501,27 +494,6 @@ export type Database = {
             columns: ["lancado_por"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notas_aluno_id_fkey"
-            columns: ["aluno_id"]
-            isOneToOne: false
-            referencedRelation: "alunos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notas_ano_lectivo_id_fkey"
-            columns: ["ano_lectivo_id"]
-            isOneToOne: false
-            referencedRelation: "anos_lectivos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "notas_disciplina_id_fkey"
-            columns: ["disciplina_id"]
-            isOneToOne: false
-            referencedRelation: "disciplinas"
             referencedColumns: ["id"]
           },
         ]
@@ -597,56 +569,28 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_professor_disciplinas_ano_lectivo_id"
+            foreignKeyName: "fk_professor_disciplinas_ano_lectivo"
             columns: ["ano_lectivo_id"]
             isOneToOne: false
             referencedRelation: "anos_lectivos"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_professor_disciplinas_disciplina_id"
+            foreignKeyName: "fk_professor_disciplinas_disciplina"
             columns: ["disciplina_id"]
             isOneToOne: false
             referencedRelation: "disciplinas"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_professor_disciplinas_professor_id"
+            foreignKeyName: "fk_professor_disciplinas_professor"
             columns: ["professor_id"]
             isOneToOne: false
             referencedRelation: "professores"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_professor_disciplinas_turma_id"
-            columns: ["turma_id"]
-            isOneToOne: false
-            referencedRelation: "turmas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "professor_disciplinas_ano_lectivo_id_fkey"
-            columns: ["ano_lectivo_id"]
-            isOneToOne: false
-            referencedRelation: "anos_lectivos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "professor_disciplinas_disciplina_id_fkey"
-            columns: ["disciplina_id"]
-            isOneToOne: false
-            referencedRelation: "disciplinas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "professor_disciplinas_professor_id_fkey"
-            columns: ["professor_id"]
-            isOneToOne: false
-            referencedRelation: "professores"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "professor_disciplinas_turma_id_fkey"
+            foreignKeyName: "fk_professor_disciplinas_turma"
             columns: ["turma_id"]
             isOneToOne: false
             referencedRelation: "turmas"
