@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Administrativo from "./pages/Administrativo";
 import Pedagogico from "./pages/Pedagogico";
 import Aluno from "./pages/Aluno";
+import Professor from "./pages/Professor";
 import NotFound from "./pages/NotFound";
 import GestaoDeTurmas from "./pages/pedagogico/GestaoDeTurmas";
 import AtribuicaoDisciplinas from "./pages/pedagogico/AtribuicaoDisciplinas";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/pedagogico/relatorios" element={<RelatoriosPedagogicos />} />
             <Route path="/pedagogico/aprovacoes" element={<Aprovacoes />} />
             <Route path="/aluno" element={<Aluno />} />
+            <Route path="/professor" element={<Professor />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
