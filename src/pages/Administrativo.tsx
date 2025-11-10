@@ -17,8 +17,16 @@ const Administrativo = () => {
   }, [user, loading, navigate]);
   const modules = [
     {
+      title: "Gestão de Professores",
+      description: "Cadastrar e gerir professores do sistema",
+      icon: Users,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+      path: "/administrativo/gestao-professores",
+    },
+    {
       title: "Gestão de Utilizadores",
-      description: "Cadastrar e gerir professores, alunos e funcionários",
+      description: "Cadastrar e gerir alunos e funcionários",
       icon: Users,
       color: "text-primary",
       bgColor: "bg-primary/10",
@@ -97,7 +105,13 @@ const Administrativo = () => {
                   <CardDescription>{module.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full">Aceder</Button>
+                  <Button 
+                    className="w-full" 
+                    onClick={() => module.path ? navigate(module.path) : null}
+                    disabled={!module.path}
+                  >
+                    Aceder
+                  </Button>
                 </CardContent>
               </Card>
             );
