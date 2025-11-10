@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const turmaSchema = z.object({
@@ -61,7 +61,7 @@ const GestaoDeTurmas = () => {
     setLoadingData(true);
     try {
       const [turmasRes, anosRes] = await Promise.all([
-        supabase.from("turmas").select("*, anos_lectivos(ano)").order("classe", { ascending: true }),
+        supabase.from("turmas").select("*, anos_lectivos(ano), alunos(id)").order("classe", { ascending: true }),
         supabase.from("anos_lectivos").select("*").eq("activo", true),
       ]);
 
@@ -288,13 +288,14 @@ const GestaoDeTurmas = () => {
                   <TableHead>Classe</TableHead>
                   <TableHead>Ano Letivo</TableHead>
                   <TableHead>Capacidade</TableHead>
+                  <TableHead>Alunos</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {turmas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       Nenhuma turma registada
                     </TableCell>
                   </TableRow>
@@ -305,7 +306,16 @@ const GestaoDeTurmas = () => {
                       <TableCell>{turma.classe}ª</TableCell>
                       <TableCell>{turma.anos_lectivos?.ano}</TableCell>
                       <TableCell>{turma.capacidade}</TableCell>
+                      <TableCell>{turma.alunos?.length || 0}</TableCell>
                       <TableCell className="text-right space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => navigate(`/pedagogico/gestao-turmas/${turma.id}`)}
+                          title="Ver detalhes"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
