@@ -45,6 +45,7 @@ const Administrativo = () => {
       icon: DollarSign,
       color: "text-success",
       bgColor: "bg-success/10",
+      path: "/administrativo/gestao-financeira",
     },
     {
       title: "Inventário",
