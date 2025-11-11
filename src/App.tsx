@@ -19,6 +19,7 @@ import LancamentoNotas from "./pages/pedagogico/LancamentoNotas";
 import RelatoriosPedagogicos from "./pages/pedagogico/RelatoriosPedagogicos";
 import Aprovacoes from "./pages/pedagogico/Aprovacoes";
 import GestaoProfessores from "./pages/GestaoProfessores";
+import GestaoAlunos from "./pages/GestaoAlunos";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/aluno" element={<Aluno />} />
             <Route path="/professor" element={<Professor />} />
             <Route path="/administrativo/gestao-professores" element={<GestaoProfessores />} />
+            <Route path="/administrativo/gestao-alunos" element={<GestaoAlunos />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

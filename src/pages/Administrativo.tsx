@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, UserPlus, FileText, DollarSign, Package, Award } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { Users, GraduationCap, FileText, Package, DollarSign, BarChart, UserPlus } from "lucide-react";
 
 const Administrativo = () => {
   const { user, loading } = useAuth();
@@ -19,24 +19,25 @@ const Administrativo = () => {
     {
       title: "Gestão de Professores",
       description: "Cadastrar e gerir professores do sistema",
-      icon: Users,
+      icon: GraduationCap,
       color: "text-primary",
       bgColor: "bg-primary/10",
       path: "/administrativo/gestao-professores",
     },
     {
-      title: "Gestão de Utilizadores",
-      description: "Cadastrar e gerir alunos e funcionários",
-      icon: Users,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
+      title: "Gestão de Alunos",
+      description: "Cadastrar e gerir alunos do sistema",
+      icon: UserPlus,
+      color: "text-accent",
+      bgColor: "bg-accent/10",
+      path: "/administrativo/gestao-alunos",
     },
     {
       title: "Matrículas",
       description: "Registar novas matrículas e transferências",
-      icon: UserPlus,
-      color: "text-accent",
-      bgColor: "bg-accent/10",
+      icon: Users,
+      color: "text-secondary",
+      bgColor: "bg-secondary/10",
     },
     {
       title: "Gestão Financeira",
@@ -55,14 +56,14 @@ const Administrativo = () => {
     {
       title: "Documentos",
       description: "Emitir certificados, declarações e boletins",
-      icon: Award,
+      icon: FileText,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
       title: "Relatórios",
       description: "Gerar relatórios administrativos e financeiros",
-      icon: FileText,
+      icon: BarChart,
       color: "text-accent",
       bgColor: "bg-accent/10",
     },
