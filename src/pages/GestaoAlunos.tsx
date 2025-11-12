@@ -144,7 +144,7 @@ const GestaoAlunos = () => {
         .from("alunos")
         .select(`
           *,
-          profiles:user_id (
+          profiles(
             id,
             nome_completo,
             email,
@@ -153,7 +153,7 @@ const GestaoAlunos = () => {
             data_nascimento,
             endereco
           ),
-          turmas (
+          turmas(
             nome,
             classe
           )
@@ -201,17 +201,16 @@ const GestaoAlunos = () => {
           nota_cpp,
           nota_cat,
           media,
-          disciplinas (
+          disciplinas(
             nome,
             codigo
           ),
-          anos_lectivos (
+          anos_lectivos(
             ano
           )
         `)
         .eq("aluno_id", alunoId)
-        .order("anos_lectivos(ano)", { ascending: false })
-        .order("trimestre");
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setHistoricoNotas(data || []);

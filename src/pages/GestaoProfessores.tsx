@@ -98,7 +98,7 @@ const GestaoProfessores = () => {
         .from("professores")
         .select(`
           *,
-          profiles (
+          profiles(
             nome_completo,
             email,
             telefone,
