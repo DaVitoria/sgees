@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LayoutDashboard, BookOpen, User, LogOut } from "lucide-react";
+import { GraduationCap, LayoutDashboard, BookOpen, User, LogOut, UserCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface LayoutProps {
@@ -10,15 +10,28 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const { signOut, userRole } = useAuth();
 
-  const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Administrativo", href: "/administrativo", icon: GraduationCap },
-    { name: "Pedagógico", href: "/pedagogico", icon: BookOpen },
-    { name: "Portal do Aluno", href: "/aluno", icon: User },
-  ];
+  // Definir navegação baseada no role do usuário
+  const getNavigationItems = () => {
+    const baseNav = [
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin", "secretario", "professor", "aluno", "funcionario", "tesoureiro"] }
+    ];
 
+    const adminNav = [
+      { name: "Administrativo", href: "/administrativo", icon: GraduationCap, roles: ["admin", "secretario"] },
+      { name: "Pedagógico", href: "/pedagogico", icon: BookOpen, roles: ["admin", "secretario", "professor"] },
+    ];
+
+    const alunoNav = [
+      { name: "Portal do Aluno", href: "/aluno", icon: User, roles: ["aluno"] },
+    ];
+
+    const allItems = [...baseNav, ...adminNav, ...alunoNav];
+    return allItems.filter(item => !userRole || item.roles.includes(userRole));
+  };
+
+  const navigation = getNavigationItems();
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -36,10 +49,18 @@ const Layout = ({ children }: LayoutProps) => {
                 <p className="text-xs text-muted-foreground">Gestão Educacional</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link to="/perfil">
+                <Button variant="ghost" size="sm">
+                  <UserCircle className="h-4 w-4 mr-2" />
+                  Perfil
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
       </header>

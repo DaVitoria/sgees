@@ -24,8 +24,13 @@ const Aluno = () => {
     );
   }
 
-  if (!user || userRole !== 'aluno') {
-    navigate("/dashboard");
+  useEffect(() => {
+    if (!loading && user && userRole && userRole !== 'aluno') {
+      navigate("/dashboard");
+    }
+  }, [user, userRole, loading, navigate]);
+
+  if (!user) {
     return null;
   }
 

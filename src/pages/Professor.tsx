@@ -24,8 +24,13 @@ const Professor = () => {
     );
   }
 
-  if (!user || userRole !== 'professor') {
-    navigate("/dashboard");
+  useEffect(() => {
+    if (!loading && user && userRole && userRole !== 'professor') {
+      navigate("/dashboard");
+    }
+  }, [user, userRole, loading, navigate]);
+
+  if (!user) {
     return null;
   }
 
