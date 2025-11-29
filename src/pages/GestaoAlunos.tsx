@@ -36,6 +36,7 @@ import { z } from "zod";
 const alunoSchema = z.object({
   nome_completo: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(100),
   email: z.string().email("Email inválido").max(255),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres").max(100).optional(),
   telefone: z.string().min(9, "Telefone deve ter pelo menos 9 dígitos").max(20),
   bi: z.string().min(8, "BI deve ter pelo menos 8 caracteres").max(20),
   data_nascimento: z.string().min(1, "Data de nascimento é obrigatória"),
@@ -115,6 +116,7 @@ const GestaoAlunos = () => {
   const [formData, setFormData] = useState<AlunoFormData>({
     nome_completo: "",
     email: "",
+    password: "",
     telefone: "",
     bi: "",
     data_nascimento: "",
@@ -126,6 +128,7 @@ const GestaoAlunos = () => {
     encarregado_parentesco: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -231,9 +234,15 @@ const GestaoAlunos = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    setIsSubmitting(true);
 
     try {
-      const validatedData = alunoSchema.parse(formData);
+      // For new students, password is required
+      const schemaToUse = editingAluno 
+        ? alunoSchema 
+        : alunoSchema.extend({ password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres").max(100) });
+      
+      const validatedData = schemaToUse.parse(formData);
 
       if (editingAluno) {
         // Update existing aluno
@@ -271,41 +280,60 @@ const GestaoAlunos = () => {
           description: "Os dados do aluno foram atualizados com sucesso.",
         });
       } else {
-        // Generate a new UUID for the profile
-        const newUserId = crypto.randomUUID();
+        // SECURITY FIX: Create authenticated user via supabase.auth.signUp()
+        // This ensures the student can log in and the profile.id references a valid auth.users(id)
+        const redirectUrl = `${window.location.origin}/`;
         
-        // Create new profile
-        const { data: profileData, error: profileError } = await supabase
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: validatedData.email,
+          password: validatedData.password!,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: {
+              nome_completo: validatedData.nome_completo,
+            },
+          },
+        });
+
+        if (authError) {
+          if (authError.message.includes("already registered")) {
+            throw new Error("Este email já está registado no sistema.");
+          }
+          throw authError;
+        }
+
+        if (!authData.user) {
+          throw new Error("Erro ao criar conta de utilizador.");
+        }
+
+        // Update the profile with additional data (profile is auto-created by trigger)
+        const { error: profileError } = await supabase
           .from("profiles")
-          .insert({
-            id: newUserId,
-            nome_completo: validatedData.nome_completo,
-            email: validatedData.email,
+          .update({
             telefone: validatedData.telefone,
             bi: validatedData.bi,
             data_nascimento: validatedData.data_nascimento,
             endereco: validatedData.endereco,
           })
-          .select()
-          .single();
+          .eq("id", authData.user.id);
 
         if (profileError) throw profileError;
 
-        // Create user_role
+        // Create user_role as 'aluno'
         const { error: roleError } = await supabase
           .from("user_roles")
           .insert({
-            user_id: profileData.id,
+            user_id: authData.user.id,
             role: "aluno",
           });
 
         if (roleError) throw roleError;
 
-        // Create aluno
+        // Create aluno record
         const { error: alunoError } = await supabase
           .from("alunos")
           .insert({
-            user_id: profileData.id,
+            user_id: authData.user.id,
             numero_matricula: validatedData.numero_matricula,
             turma_id: validatedData.turma_id || null,
             encarregado_nome: validatedData.encarregado_nome,
@@ -317,7 +345,7 @@ const GestaoAlunos = () => {
 
         toast({
           title: "Aluno criado",
-          description: "Novo aluno adicionado com sucesso.",
+          description: "Novo aluno adicionado com sucesso. O aluno pode agora fazer login com o email e senha definidos.",
         });
       }
 
@@ -326,6 +354,7 @@ const GestaoAlunos = () => {
       setFormData({
         nome_completo: "",
         email: "",
+        password: "",
         telefone: "",
         bi: "",
         data_nascimento: "",
@@ -353,6 +382,8 @@ const GestaoAlunos = () => {
           variant: "destructive",
         });
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -370,6 +401,7 @@ const GestaoAlunos = () => {
     setFormData({
       nome_completo: aluno.profiles.nome_completo,
       email: aluno.profiles.email || "",
+      password: "", // Password is not required when editing
       telefone: aluno.profiles.telefone || "",
       bi: aluno.profiles.bi || "",
       data_nascimento: aluno.profiles.data_nascimento || "",
@@ -442,6 +474,7 @@ const GestaoAlunos = () => {
             setFormData({
               nome_completo: "",
               email: "",
+              password: "",
               telefone: "",
               bi: "",
               data_nascimento: "",
@@ -585,9 +618,26 @@ const GestaoAlunos = () => {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      disabled={!!editingAluno}
                     />
                     {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
+                    {!!editingAluno && <p className="text-xs text-muted-foreground mt-1">O email não pode ser alterado após a criação</p>}
                   </div>
+                  {!editingAluno && (
+                    <div>
+                      <Label htmlFor="password">Senha *</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                      {errors.password && <p className="text-sm text-destructive mt-1">{errors.password}</p>}
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="telefone">Telefone *</Label>
                     <Input
@@ -677,11 +727,11 @@ const GestaoAlunos = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  {editingAluno ? "Atualizar" : "Adicionar"}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "A processar..." : (editingAluno ? "Atualizar" : "Adicionar")}
                 </Button>
               </DialogFooter>
             </form>
