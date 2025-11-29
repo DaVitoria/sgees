@@ -70,6 +70,7 @@ const Administrativo = () => {
       icon: BarChart,
       color: "text-accent",
       bgColor: "bg-accent/10",
+      path: "/administrativo/relatorios",
     },
   ];
 
