@@ -880,6 +880,9 @@ export type Database = {
         }
         Returns: number
       }
+      get_financial_summary: { Args: never; Returns: Json }
+      get_organizational_structure: { Args: never; Returns: Json }
+      get_school_statistics: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
