@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, Target, Heart, TrendingUp, BookOpen, Users, Award, Calendar, Wallet, Building2, UserCircle, ChevronRight, DollarSign, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { GraduationCap, Target, Heart, TrendingUp, BookOpen, Users, Award, Calendar, Wallet, Building2, UserCircle, ChevronRight, DollarSign, ArrowUpCircle, ArrowDownCircle, FileDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
+import { generateFinancialReportPDF } from "@/utils/generateFinancialReportPDF";
+import { useToast } from "@/hooks/use-toast";
 
 interface Noticia {
   id: string;
@@ -80,12 +82,39 @@ const formatCurrencyShort = (value: number) => {
 
 const Home = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [stats, setStats] = useState<SchoolStats | null>(null);
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary | null>(null);
   const [orgStructure, setOrgStructure] = useState<OrgStructure | null>(null);
   const [monthlyFinancial, setMonthlyFinancial] = useState<MonthlyFinancial[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleExportPDF = () => {
+    if (!financialSummary || !stats) {
+      toast({
+        title: "Erro",
+        description: "Dados financeiros não disponíveis para exportação.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      generateFinancialReportPDF(financialSummary, monthlyFinancial, stats);
+      toast({
+        title: "Relatório Exportado",
+        description: "O relatório financeiro foi gerado com sucesso."
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o relatório.",
+        variant: "destructive"
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -233,11 +262,21 @@ const Home = () => {
       {/* Financial Summary Section */}
       <section className="py-16 px-4 bg-background">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Situação Financeira</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Transparência na gestão dos recursos financeiros da nossa instituição.
-            </p>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
+            <div className="text-center md:text-left mb-4 md:mb-0">
+              <h2 className="text-3xl font-bold text-foreground mb-2">Situação Financeira</h2>
+              <p className="text-muted-foreground max-w-2xl">
+                Transparência na gestão dos recursos financeiros da nossa instituição.
+              </p>
+            </div>
+            <Button 
+              onClick={handleExportPDF}
+              disabled={loading || !financialSummary}
+              className="gap-2"
+            >
+              <FileDown className="h-4 w-4" />
+              Exportar Relatório PDF
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
