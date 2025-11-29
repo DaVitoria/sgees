@@ -150,7 +150,7 @@ const GestaoAlunos = () => {
         .from("alunos")
         .select(`
           *,
-          profiles(
+          profiles!user_id(
             id,
             nome_completo,
             email,
@@ -159,7 +159,7 @@ const GestaoAlunos = () => {
             data_nascimento,
             endereco
           ),
-          turmas(
+          turmas!turma_id(
             nome,
             classe
           )

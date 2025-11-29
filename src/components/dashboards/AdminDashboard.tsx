@@ -29,7 +29,7 @@ export const AdminDashboard = () => {
       const [alunosRes, professoresRes, turmasRes, funcionariosRes, financasRes, notasRes] = await Promise.all([
         supabase.from("alunos").select("id", { count: "exact" }),
         supabase.from("professores").select("id", { count: "exact" }),
-        supabase.from("turmas").select("id, nome, alunos(id)", { count: "exact" }),
+        supabase.from("turmas").select("id, nome, alunos!turma_id(id)", { count: "exact" }),
         supabase.from("funcionarios").select("id", { count: "exact" }),
         supabase.from("financas").select("tipo, valor, categoria"),
         supabase.from("notas").select("media_trimestral"),

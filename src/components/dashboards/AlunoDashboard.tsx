@@ -83,8 +83,8 @@ export const AlunoDashboard = () => {
         .from("alunos")
         .select(`
           *,
-          profiles(nome_completo),
-          turmas(id, nome, classe)
+          profiles!user_id(nome_completo),
+          turmas!turma_id(id, nome, classe)
         `)
         .eq("user_id", user?.id)
         .maybeSingle();
@@ -134,7 +134,7 @@ export const AlunoDashboard = () => {
         .from("notas")
         .select(`
           *,
-          disciplinas(nome, codigo),
+          disciplinas!disciplina_id(nome, codigo),
           anos_lectivos!ano_lectivo_id(id, ano)
         `)
         .eq("aluno_id", alunoData.id)

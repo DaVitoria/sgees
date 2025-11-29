@@ -45,8 +45,8 @@ export const ProfessorDashboard = () => {
         .from("professor_disciplinas")
         .select(`
           *,
-          turmas(id, nome, alunos(id)),
-          disciplinas(nome)
+          turmas!turma_id(id, nome, alunos!turma_id(id)),
+          disciplinas!disciplina_id(nome)
         `)
         .eq("professor_id", professorData.id);
 
@@ -81,7 +81,7 @@ export const ProfessorDashboard = () => {
       
       const { data: notasData } = await supabase
         .from("notas")
-        .select("media_trimestral, trimestre, disciplinas(nome)")
+        .select("media_trimestral, trimestre, disciplinas!disciplina_id(nome)")
         .in("aluno_id", alunoIds);
 
       // Calcular média geral usando media_trimestral

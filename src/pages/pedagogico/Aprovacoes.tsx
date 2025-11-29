@@ -68,7 +68,7 @@ const Aprovacoes = () => {
     try {
       const { data: alunos, error: alunosError } = await supabase
         .from("alunos")
-        .select("id, numero_matricula, user_id, profiles(nome_completo)")
+        .select("id, numero_matricula, user_id, profiles!user_id(nome_completo)")
         .eq("turma_id", selectedTurma);
 
       if (alunosError) throw alunosError;

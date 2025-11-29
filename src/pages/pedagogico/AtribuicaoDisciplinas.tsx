@@ -66,13 +66,13 @@ const AtribuicaoDisciplinas = () => {
           .from("professor_disciplinas")
           .select(`
             *,
-            professores!professor_id(id, user_id, profiles(nome_completo)),
+            professores!professor_id(id, user_id, profiles!user_id(nome_completo)),
             disciplinas!disciplina_id(nome, codigo),
             turmas!turma_id(nome, classe),
             anos_lectivos!ano_lectivo_id(ano)
           `)
           .order("created_at", { ascending: false }),
-        supabase.from("professores").select("id, user_id, profiles(nome_completo)"),
+        supabase.from("professores").select("id, user_id, profiles!user_id(nome_completo)"),
         supabase.from("disciplinas").select("*").order("nome"),
         supabase.from("turmas").select("*").order("classe"),
         supabase.from("anos_lectivos").select("*").eq("activo", true),
