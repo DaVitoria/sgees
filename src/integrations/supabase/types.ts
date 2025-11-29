@@ -872,6 +872,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_assign_role: {
+        Args: {
+          target_email: string
+          target_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: undefined
+      }
+      assign_admin_role_by_email: {
+        Args: { admin_email: string }
+        Returns: undefined
+      }
       calcular_media_anual: {
         Args: {
           p_aluno_id: string
