@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar } from "lucide-react";
+import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar, History, CheckCircle, XCircle, Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from "recharts";
+import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, LineChart, Line } from "recharts";
 import { generateBoletimPDF } from "@/utils/generateBoletimPDF";
 import { useToast } from "@/hooks/use-toast";
 
@@ -33,6 +33,17 @@ interface Matricula {
   } | null;
 }
 
+interface HistoricoAno {
+  anoLectivo: string;
+  anoLectivoId: string;
+  classe: number;
+  turma: string;
+  mediaAnual: number | null;
+  status: 'aprovado' | 'reprovado' | 'em_curso' | 'em_exame';
+  disciplinas: number;
+  notasLancadas: number;
+}
+
 export const AlunoDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -44,6 +55,8 @@ export const AlunoDashboard = () => {
   const [mediaAnual, setMediaAnual] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [historico, setHistorico] = useState<HistoricoAno[]>([]);
+  const [progressaoData, setProgressaoData] = useState<any[]>([]);
   
   // Filter states
   const [anosLectivos, setAnosLectivos] = useState<AnoLectivo[]>([]);
@@ -129,11 +142,100 @@ export const AlunoDashboard = () => {
 
       setNotas(notasData || []);
 
+      // Compute academic history
+      computeHistorico(matriculasData as unknown as Matricula[], notasData || [], anosData || []);
+
     } catch (error) {
       console.error("Erro ao carregar dados do aluno:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const computeHistorico = (matriculasData: Matricula[], notasData: any[], anosData: AnoLectivo[]) => {
+    const historicoMap: Record<string, HistoricoAno> = {};
+
+    // Group matriculas by ano lectivo
+    matriculasData.forEach(matricula => {
+      const anoId = matricula.ano_lectivo_id;
+      const ano = (matricula.anos_lectivos as any)?.ano || "";
+      const turma = (matricula.turmas as any)?.nome || "";
+      const classe = (matricula.turmas as any)?.classe || 0;
+
+      if (!historicoMap[anoId]) {
+        historicoMap[anoId] = {
+          anoLectivo: ano,
+          anoLectivoId: anoId,
+          classe,
+          turma,
+          mediaAnual: null,
+          status: 'em_curso',
+          disciplinas: 0,
+          notasLancadas: 0
+        };
+      }
+    });
+
+    // Calculate media anual for each ano lectivo
+    Object.keys(historicoMap).forEach(anoId => {
+      const notasDoAno = notasData.filter(n => n.ano_lectivo_id === anoId);
+      
+      if (notasDoAno.length > 0) {
+        // Group by disciplina and calculate annual average per disciplina
+        const notasPorDisciplina: Record<string, number[]> = {};
+        
+        notasDoAno.forEach(nota => {
+          const discId = nota.disciplina_id;
+          if (!notasPorDisciplina[discId]) {
+            notasPorDisciplina[discId] = [];
+          }
+          if (nota.media_trimestral) {
+            notasPorDisciplina[discId].push(Number(nota.media_trimestral));
+          }
+        });
+
+        const disciplinasCount = Object.keys(notasPorDisciplina).length;
+        historicoMap[anoId].disciplinas = disciplinasCount;
+        historicoMap[anoId].notasLancadas = notasDoAno.length;
+
+        // Calculate overall annual average (MA)
+        const mediasAnuaisPorDisciplina = Object.values(notasPorDisciplina).map(notas => {
+          return notas.length > 0 ? notas.reduce((a, b) => a + b, 0) / notas.length : 0;
+        });
+
+        if (mediasAnuaisPorDisciplina.length > 0) {
+          const mediaAnual = mediasAnuaisPorDisciplina.reduce((a, b) => a + b, 0) / mediasAnuaisPorDisciplina.length;
+          historicoMap[anoId].mediaAnual = Number(mediaAnual.toFixed(2));
+
+          // Determine status
+          const anoInfo = anosData.find(a => a.id === anoId);
+          if (anoInfo?.activo) {
+            historicoMap[anoId].status = 'em_curso';
+          } else if (mediaAnual >= 10) {
+            historicoMap[anoId].status = 'aprovado';
+          } else if (mediaAnual >= 7) {
+            historicoMap[anoId].status = 'em_exame';
+          } else {
+            historicoMap[anoId].status = 'reprovado';
+          }
+        }
+      }
+    });
+
+    // Sort by ano lectivo (ascending)
+    const historicoArray = Object.values(historicoMap).sort((a, b) => {
+      return a.anoLectivo.localeCompare(b.anoLectivo);
+    });
+
+    setHistorico(historicoArray);
+
+    // Create progression data for chart
+    const progressao = historicoArray.map(h => ({
+      ano: h.anoLectivo,
+      classe: h.classe,
+      media: h.mediaAnual || 0
+    }));
+    setProgressaoData(progressao);
   };
 
   const applyFilters = () => {
@@ -571,6 +673,161 @@ export const AlunoDashboard = () => {
             </p>
           </div>
         )}
+      </Card>
+
+      {/* Academic History Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Histórico Escolar Completo
+          </CardTitle>
+          <CardDescription>
+            Progressão académica ao longo dos anos lectivos
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Progression Chart */}
+          {progressaoData.length > 1 && (
+            <div>
+              <h4 className="text-sm font-medium mb-4">Evolução da Média Anual</h4>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={progressaoData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="ano" />
+                  <YAxis domain={[0, 20]} />
+                  <Tooltip 
+                    formatter={(value: number) => [`${value.toFixed(2)}`, "Média"]}
+                    labelFormatter={(label) => `Ano Lectivo: ${label}`}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="media" 
+                    stroke="#3b82f6" 
+                    strokeWidth={2}
+                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 5 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Timeline */}
+          <div className="relative">
+            <h4 className="text-sm font-medium mb-4">Percurso Escolar</h4>
+            {historico.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">
+                Nenhum histórico escolar encontrado
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {historico.map((item, index) => {
+                  const getStatusIcon = () => {
+                    switch (item.status) {
+                      case 'aprovado':
+                        return <CheckCircle className="h-5 w-5 text-green-500" />;
+                      case 'reprovado':
+                        return <XCircle className="h-5 w-5 text-red-500" />;
+                      case 'em_exame':
+                        return <Clock className="h-5 w-5 text-yellow-500" />;
+                      default:
+                        return <Clock className="h-5 w-5 text-blue-500" />;
+                    }
+                  };
+
+                  const getStatusBadge = () => {
+                    switch (item.status) {
+                      case 'aprovado':
+                        return <Badge className="bg-green-500 text-white">Aprovado</Badge>;
+                      case 'reprovado':
+                        return <Badge className="bg-red-500 text-white">Reprovado</Badge>;
+                      case 'em_exame':
+                        return <Badge className="bg-yellow-500 text-white">Em Exame</Badge>;
+                      default:
+                        return <Badge className="bg-blue-500 text-white">Em Curso</Badge>;
+                    }
+                  };
+
+                  return (
+                    <div key={item.anoLectivoId} className="relative">
+                      <div className="flex items-start gap-4">
+                        {/* Timeline connector */}
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted border-2 border-primary">
+                            {getStatusIcon()}
+                          </div>
+                          {index < historico.length - 1 && (
+                            <div className="w-0.5 h-16 bg-border mt-2" />
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 bg-muted/30 rounded-lg p-4 border">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-lg">{item.anoLectivo}</span>
+                              {getStatusBadge()}
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              {item.classe}ª Classe - Turma {item.turma}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-3">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Média Anual</p>
+                              <p className={`font-bold ${
+                                item.mediaAnual !== null 
+                                  ? item.mediaAnual >= 10 
+                                    ? 'text-green-600' 
+                                    : item.mediaAnual >= 7 
+                                      ? 'text-yellow-600' 
+                                      : 'text-red-600'
+                                  : ''
+                              }`}>
+                                {item.mediaAnual !== null ? `${item.mediaAnual.toFixed(2)}/20` : '-'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Disciplinas</p>
+                              <p className="font-medium">{item.disciplinas}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Notas Lançadas</p>
+                              <p className="font-medium">{item.notasLancadas}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Situação</p>
+                              <p className={`font-medium ${
+                                item.status === 'aprovado' ? 'text-green-600' :
+                                item.status === 'reprovado' ? 'text-red-600' :
+                                item.status === 'em_exame' ? 'text-yellow-600' :
+                                'text-blue-600'
+                              }`}>
+                                {item.status === 'aprovado' ? 'Aprovado' :
+                                 item.status === 'reprovado' ? 'Reprovado' :
+                                 item.status === 'em_exame' ? 'Em Exame' :
+                                 'Em Curso'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Show progression arrow */}
+                          {index < historico.length - 1 && item.status === 'aprovado' && (
+                            <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                              <ArrowRight className="h-4 w-4" />
+                              <span>Progrediu para a {historico[index + 1].classe}ª classe</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </CardContent>
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
