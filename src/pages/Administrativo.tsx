@@ -38,6 +38,7 @@ const Administrativo = () => {
       icon: Users,
       color: "text-secondary",
       bgColor: "bg-secondary/10",
+      path: "/administrativo/matriculas",
     },
     {
       title: "Gestão Financeira",

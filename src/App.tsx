@@ -22,6 +22,7 @@ import Aprovacoes from "./pages/pedagogico/Aprovacoes";
 import GestaoProfessores from "./pages/GestaoProfessores";
 import GestaoAlunos from "./pages/GestaoAlunos";
 import GestaoFinanceira from "./pages/GestaoFinanceira";
+import Matriculas from "./pages/administrativo/Matriculas";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
             <Route path="/administrativo/gestao-professores" element={<GestaoProfessores />} />
             <Route path="/administrativo/gestao-alunos" element={<GestaoAlunos />} />
             <Route path="/administrativo/gestao-financeira" element={<GestaoFinanceira />} />
+            <Route path="/administrativo/matriculas" element={<Matriculas />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
