@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, LayoutDashboard, BookOpen, User, LogOut, UserCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "@/components/NotificationBell";
 
 interface LayoutProps {
   children: ReactNode;
@@ -50,6 +51,7 @@ const Layout = ({ children }: LayoutProps) => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <NotificationBell />
               <Link to="/perfil">
                 <Button variant="ghost" size="sm">
                   <UserCircle className="h-4 w-4 mr-2" />
