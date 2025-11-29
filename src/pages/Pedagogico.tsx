@@ -7,7 +7,7 @@ import { BookOpen, Calendar, ClipboardCheck, BarChart3, FileCheck } from "lucide
 import { useAuth } from "@/hooks/useAuth";
 
 const Pedagogico = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, userRole } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,7 +15,8 @@ const Pedagogico = () => {
       navigate("/login");
     }
   }, [user, loading, navigate]);
-  const modules = [
+
+  const allModules = [
     {
       title: "Gestão de Turmas",
       description: "Criar e organizar turmas e horários",
@@ -23,6 +24,7 @@ const Pedagogico = () => {
       color: "text-primary",
       bgColor: "bg-primary/10",
       route: "/pedagogico/gestao-turmas",
+      allowedRoles: ["admin", "funcionario", "secretario"],
     },
     {
       title: "Atribuição de Disciplinas",
@@ -31,6 +33,7 @@ const Pedagogico = () => {
       color: "text-accent",
       bgColor: "bg-accent/10",
       route: "/pedagogico/atribuicao-disciplinas",
+      allowedRoles: ["admin", "funcionario", "secretario"],
     },
     {
       title: "Lançamento de Notas",
@@ -39,6 +42,7 @@ const Pedagogico = () => {
       color: "text-success",
       bgColor: "bg-success/10",
       route: "/pedagogico/lancamento-notas",
+      allowedRoles: ["admin", "professor"],
     },
     {
       title: "Relatórios Pedagógicos",
@@ -47,6 +51,7 @@ const Pedagogico = () => {
       color: "text-warning",
       bgColor: "bg-warning/10",
       route: "/pedagogico/relatorios",
+      allowedRoles: ["admin", "professor"],
     },
     {
       title: "Aprovações",
@@ -55,8 +60,13 @@ const Pedagogico = () => {
       color: "text-primary",
       bgColor: "bg-primary/10",
       route: "/pedagogico/aprovacoes",
+      allowedRoles: ["admin", "professor"],
     },
   ];
+
+  const visibleModules = allModules.filter(
+    (module) => userRole && module.allowedRoles.includes(userRole)
+  );
 
   if (loading) {
     return (
@@ -82,25 +92,35 @@ const Pedagogico = () => {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {modules.map((module) => {
-            const Icon = module.icon;
-            return (
-              <Card key={module.title} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className={`w-12 h-12 rounded-lg ${module.bgColor} flex items-center justify-center mb-4`}>
-                    <Icon className={`h-6 w-6 ${module.color}`} />
-                  </div>
-                  <CardTitle className="text-lg">{module.title}</CardTitle>
-                  <CardDescription>{module.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="w-full" onClick={() => navigate(module.route)}>Aceder</Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {visibleModules.length === 0 ? (
+          <Card>
+            <CardContent className="py-8 text-center">
+              <p className="text-muted-foreground">
+                Não tem permissões para aceder aos módulos pedagógicos.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {visibleModules.map((module) => {
+              const Icon = module.icon;
+              return (
+                <Card key={module.title} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className={`w-12 h-12 rounded-lg ${module.bgColor} flex items-center justify-center mb-4`}>
+                      <Icon className={`h-6 w-6 ${module.color}`} />
+                    </div>
+                    <CardTitle className="text-lg">{module.title}</CardTitle>
+                    <CardDescription>{module.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full" onClick={() => navigate(module.route)}>Aceder</Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     </Layout>
   );
