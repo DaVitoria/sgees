@@ -81,7 +81,7 @@ const LancamentoNotas = () => {
             *,
             alunos(id, numero_matricula, profiles(nome_completo)),
             disciplinas(nome, codigo),
-            anos_lectivos(ano)
+            anos_lectivos!ano_lectivo_id(ano)
           `)
           .eq("trimestre", selectedTrimestre)
           .order("created_at", { ascending: false }),

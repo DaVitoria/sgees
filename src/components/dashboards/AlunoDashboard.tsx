@@ -135,7 +135,7 @@ export const AlunoDashboard = () => {
         .select(`
           *,
           disciplinas(nome, codigo),
-          anos_lectivos(id, ano)
+          anos_lectivos!ano_lectivo_id(id, ano)
         `)
         .eq("aluno_id", alunoData.id)
         .order("trimestre");

@@ -69,7 +69,7 @@ const AtribuicaoDisciplinas = () => {
             professores(id, user_id, profiles(nome_completo)),
             disciplinas(nome, codigo),
             turmas(nome, classe),
-            anos_lectivos(ano)
+            anos_lectivos!ano_lectivo_id(ano)
           `)
           .order("created_at", { ascending: false }),
         supabase.from("professores").select("id, user_id, profiles(nome_completo)"),

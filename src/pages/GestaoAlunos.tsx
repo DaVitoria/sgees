@@ -213,7 +213,7 @@ const GestaoAlunos = () => {
             nome,
             codigo
           ),
-          anos_lectivos(
+          anos_lectivos!ano_lectivo_id(
             ano
           )
         `)
