@@ -1,1 +1,4 @@
 project_id = "dohalwyalrmphycyrcfx"
+
+[functions.send-grade-notification]
+verify_jwt = false
