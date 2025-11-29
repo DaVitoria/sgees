@@ -20,8 +20,8 @@ const Layout = ({ children }: LayoutProps) => {
     ];
 
     const adminNav = [
-      { name: "Administrativo", href: "/administrativo", icon: GraduationCap, roles: ["admin", "secretario"] },
-      { name: "Pedagógico", href: "/pedagogico", icon: BookOpen, roles: ["admin", "secretario", "professor"] },
+      { name: "Administrativo", href: "/administrativo", icon: GraduationCap, roles: ["admin", "secretario", "funcionario"] },
+      { name: "Pedagógico", href: "/pedagogico", icon: BookOpen, roles: ["admin", "secretario", "professor", "funcionario"] },
     ];
 
     const alunoNav = [
@@ -29,7 +29,11 @@ const Layout = ({ children }: LayoutProps) => {
     ];
 
     const allItems = [...baseNav, ...adminNav, ...alunoNav];
-    return allItems.filter(item => !userRole || item.roles.includes(userRole));
+    // Se não tiver role, mostrar apenas Dashboard
+    if (!userRole) {
+      return baseNav;
+    }
+    return allItems.filter(item => item.roles.includes(userRole));
   };
 
   const navigation = getNavigationItems();
