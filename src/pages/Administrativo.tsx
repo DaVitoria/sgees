@@ -4,10 +4,10 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Users, GraduationCap, FileText, Package, DollarSign, BarChart, UserPlus } from "lucide-react";
+import { Users, GraduationCap, FileText, Package, DollarSign, BarChart, UserPlus, Shield } from "lucide-react";
 
 const Administrativo = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, userRole } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,7 +15,17 @@ const Administrativo = () => {
       navigate("/login");
     }
   }, [user, loading, navigate]);
+
   const modules = [
+    {
+      title: "Gestão de Utilizadores",
+      description: "Gerir roles e níveis de acesso dos utilizadores",
+      icon: Shield,
+      color: "text-red-500",
+      bgColor: "bg-red-500/10",
+      path: "/administrativo/gestao-utilizadores",
+      adminOnly: true,
+    },
     {
       title: "Gestão de Professores",
       description: "Cadastrar e gerir professores do sistema",
@@ -74,6 +84,9 @@ const Administrativo = () => {
     },
   ];
 
+  // Filter modules based on user role
+  const visibleModules = modules.filter(m => !m.adminOnly || userRole === 'admin');
+
   if (loading) {
     return (
       <Layout>
@@ -99,10 +112,10 @@ const Administrativo = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {modules.map((module) => {
+          {visibleModules.map((module) => {
             const Icon = module.icon;
             return (
-              <Card key={module.title} className="hover:shadow-lg transition-shadow">
+              <Card key={module.title} className={`hover:shadow-lg transition-shadow ${module.adminOnly ? 'border-red-500/30' : ''}`}>
                 <CardHeader>
                   <div className={`w-12 h-12 rounded-lg ${module.bgColor} flex items-center justify-center mb-4`}>
                     <Icon className={`h-6 w-6 ${module.color}`} />
@@ -115,6 +128,7 @@ const Administrativo = () => {
                     className="w-full" 
                     onClick={() => module.path ? navigate(module.path) : null}
                     disabled={!module.path}
+                    variant={module.adminOnly ? "destructive" : "default"}
                   >
                     Aceder
                   </Button>
