@@ -1,21 +1,26 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, FileText, TrendingUp, Award, BookOpen } from "lucide-react";
+import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from "recharts";
+import { generateBoletimPDF } from "@/utils/generateBoletimPDF";
+import { useToast } from "@/hooks/use-toast";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
 
 export const AlunoDashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [aluno, setAluno] = useState<any>(null);
   const [notas, setNotas] = useState<any[]>([]);
   const [performanceData, setPerformanceData] = useState<any[]>([]);
   const [trimestreData, setTrimestreData] = useState<any[]>([]);
   const [mediaAnual, setMediaAnual] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [anoLectivo, setAnoLectivo] = useState<string>("");
 
   useEffect(() => {
     if (user) {
@@ -42,6 +47,17 @@ export const AlunoDashboard = () => {
       }
 
       setAluno(alunoData);
+
+      // Buscar ano lectivo ativo
+      const { data: anoData } = await supabase
+        .from("anos_lectivos")
+        .select("ano")
+        .eq("activo", true)
+        .maybeSingle();
+      
+      if (anoData) {
+        setAnoLectivo(anoData.ano);
+      }
 
       // Buscar notas do aluno
       const { data: notasData } = await supabase
@@ -111,9 +127,62 @@ export const AlunoDashboard = () => {
   };
 
   const getStatusAprovacao = (media: number) => {
-    if (media >= 14) return { label: "Aprovado", color: "text-green-600" };
-    if (media >= 10) return { label: "Em Exame", color: "text-yellow-600" };
+    if (media >= 10) return { label: "Aprovado", color: "text-green-600" };
+    if (media >= 7) return { label: "Em Exame", color: "text-yellow-600" };
     return { label: "Reprovado", color: "text-red-600" };
+  };
+
+  const handleDownloadBoletim = () => {
+    if (!aluno || notas.length === 0) {
+      toast({
+        title: "Sem dados disponíveis",
+        description: "Não há notas lançadas para gerar o boletim.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeneratingPDF(true);
+
+    try {
+      const boletimData = {
+        aluno: {
+          nome: aluno.profiles?.nome_completo || "N/A",
+          matricula: aluno.numero_matricula,
+          turma: aluno.turmas?.nome || "N/A",
+          classe: aluno.turmas?.classe || 0,
+          anoLectivo: anoLectivo || notas[0]?.anos_lectivos?.ano || "N/A",
+        },
+        notas: notas.map(nota => ({
+          disciplina: nota.disciplinas?.nome || "N/A",
+          trimestre: nota.trimestre,
+          nota_as1: nota.nota_as1,
+          nota_as2: nota.nota_as2,
+          nota_as3: nota.nota_as3,
+          media_as: nota.media_as,
+          nota_at: nota.nota_at,
+          media_trimestral: nota.media_trimestral,
+        })),
+        mediaAnual,
+        anoLectivo: anoLectivo || notas[0]?.anos_lectivos?.ano || "N/A",
+      };
+
+      generateBoletimPDF(boletimData);
+
+      toast({
+        title: "Boletim gerado!",
+        description: "O seu boletim de notas foi baixado com sucesso.",
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      toast({
+        title: "Erro ao gerar boletim",
+        description: "Ocorreu um erro ao gerar o PDF. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingPDF(false);
+    }
   };
 
   if (loading) {
@@ -268,7 +337,7 @@ export const AlunoDashboard = () => {
                     <td className="text-center py-3 px-4 font-medium">{nota.media_as?.toFixed(2) || "-"}</td>
                     <td className="text-center py-3 px-4">{nota.nota_at?.toFixed(1) || "-"}</td>
                     <td className="text-center py-3 px-4">
-                      <span className={`font-bold ${Number(nota.media_trimestral) >= 14 ? 'text-green-600' : Number(nota.media_trimestral) >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
+                      <span className={`font-bold ${Number(nota.media_trimestral) >= 10 ? 'text-green-600' : Number(nota.media_trimestral) >= 7 ? 'text-yellow-600' : 'text-red-600'}`}>
                         {nota.media_trimestral?.toFixed(2) || "-"}
                       </span>
                     </td>
@@ -296,9 +365,25 @@ export const AlunoDashboard = () => {
             <h3 className="text-lg font-semibold">Boletim de Notas</h3>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            Baixe o seu boletim de notas actualizado
+            Baixe o seu boletim de notas actualizado em formato PDF
           </p>
-          <Button className="w-full">Baixar Boletim</Button>
+          <Button 
+            className="w-full" 
+            onClick={handleDownloadBoletim}
+            disabled={generatingPDF || notas.length === 0}
+          >
+            {generatingPDF ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                A gerar...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Baixar Boletim PDF
+              </>
+            )}
+          </Button>
         </Card>
 
         <Card className="p-6">
@@ -309,7 +394,7 @@ export const AlunoDashboard = () => {
           <p className="text-sm text-muted-foreground mb-4">
             Aceda aos seus certificados académicos
           </p>
-          <Button className="w-full">Ver Certificados</Button>
+          <Button className="w-full" variant="outline">Ver Certificados</Button>
         </Card>
       </div>
     </div>
