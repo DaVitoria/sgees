@@ -77,12 +77,12 @@ const Aprovacoes = () => {
         (alunos || []).map(async (aluno) => {
           const { data: notas, error: notasError } = await supabase
             .from("notas")
-            .select("media, trimestre")
+            .select("media_trimestral, trimestre")
             .eq("aluno_id", aluno.id);
 
           if (notasError) throw notasError;
 
-          const medias = notas?.map((n) => n.media).filter((m) => m !== null) as number[];
+          const medias = notas?.map((n) => n.media_trimestral).filter((m) => m !== null) as number[];
           const mediaFinal = medias.length > 0 ? medias.reduce((a, b) => a + b, 0) / medias.length : 0;
 
           let status = "exame";

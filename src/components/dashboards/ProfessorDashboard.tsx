@@ -33,9 +33,12 @@ export const ProfessorDashboard = () => {
         .from("professores")
         .select("id")
         .eq("user_id", user?.id)
-        .single();
+        .maybeSingle();
 
-      if (!professorData) return;
+      if (!professorData) {
+        setLoading(false);
+        return;
+      }
 
       // Buscar atribuições do professor
       const { data: atribuicoes } = await supabase
@@ -78,11 +81,11 @@ export const ProfessorDashboard = () => {
       
       const { data: notasData } = await supabase
         .from("notas")
-        .select("media, trimestre, disciplinas(nome)")
+        .select("media_trimestral, trimestre, disciplinas(nome)")
         .in("aluno_id", alunoIds);
 
-      // Calcular média geral
-      const medias = notasData?.map(n => n.media).filter(m => m !== null) || [];
+      // Calcular média geral usando media_trimestral
+      const medias = notasData?.map(n => n.media_trimestral).filter(m => m !== null) || [];
       const mediaGeral = medias.length > 0 ? medias.reduce((acc, m) => acc + Number(m), 0) / medias.length : 0;
 
       // Dados de desempenho por trimestre
@@ -90,8 +93,8 @@ export const ProfessorDashboard = () => {
         if (!acc[nota.trimestre]) {
           acc[nota.trimestre] = { trimestre: `${nota.trimestre}º Trim`, total: 0, count: 0 };
         }
-        if (nota.media) {
-          acc[nota.trimestre].total += Number(nota.media);
+        if (nota.media_trimestral) {
+          acc[nota.trimestre].total += Number(nota.media_trimestral);
           acc[nota.trimestre].count += 1;
         }
         return acc;
@@ -197,7 +200,7 @@ export const ProfessorDashboard = () => {
                 <YAxis domain={[0, 20]} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="media" stroke="#3b82f6" strokeWidth={2} name="Média" />
+                <Line type="monotone" dataKey="media" stroke="#3b82f6" strokeWidth={2} name="Média Trimestral (MT)" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>

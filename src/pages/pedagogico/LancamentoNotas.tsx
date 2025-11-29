@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, ArrowLeft } from "lucide-react";
+import { Plus, Pencil, ArrowLeft, Calculator } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const notaSchema = z.object({
@@ -22,9 +22,10 @@ const notaSchema = z.object({
   disciplina_id: z.string().min(1, "Selecione uma disciplina"),
   ano_lectivo_id: z.string().min(1, "Selecione um ano letivo"),
   trimestre: z.coerce.number().min(1).max(3),
-  nota_mac: z.coerce.number().min(0).max(20).optional().nullable(),
-  nota_cpp: z.coerce.number().min(0).max(20).optional().nullable(),
-  nota_cat: z.coerce.number().min(0).max(20).optional().nullable(),
+  nota_as1: z.coerce.number().min(0).max(20).optional().nullable(),
+  nota_as2: z.coerce.number().min(0).max(20).optional().nullable(),
+  nota_as3: z.coerce.number().min(0).max(20).optional().nullable(),
+  nota_at: z.coerce.number().min(0).max(20).optional().nullable(),
   observacoes: z.string().max(500).optional().nullable(),
 });
 
@@ -50,9 +51,10 @@ const LancamentoNotas = () => {
       disciplina_id: "",
       ano_lectivo_id: "",
       trimestre: 1,
-      nota_mac: null,
-      nota_cpp: null,
-      nota_cat: null,
+      nota_as1: null,
+      nota_as2: null,
+      nota_as3: null,
+      nota_at: null,
       observacoes: "",
     },
   });
@@ -108,25 +110,44 @@ const LancamentoNotas = () => {
     }
   };
 
-  const calcularMedia = (mac: number | null, cpp: number | null, cat: number | null) => {
-    const values = [mac, cpp, cat].filter((v) => v !== null) as number[];
+  // Calcular MAS (Média das Avaliações Sistemáticas)
+  const calcularMAS = (as1: number | null, as2: number | null, as3: number | null) => {
+    const values = [as1, as2, as3].filter((v) => v !== null) as number[];
     if (values.length === 0) return null;
-    return values.reduce((a, b) => a + b, 0) / values.length;
+    return Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100;
+  };
+
+  // Calcular MT (Média Trimestral) = MAS * 0.4 + AT * 0.6
+  const calcularMT = (mas: number | null, at: number | null) => {
+    if (mas === null && at === null) return null;
+    const masValue = mas || 0;
+    const atValue = at || 0;
+    // Se apenas MAS, MT = MAS
+    // Se apenas AT, MT = AT
+    // Se ambos, MT = MAS * 0.4 + AT * 0.6
+    if (mas !== null && at !== null) {
+      return Math.round((masValue * 0.4 + atValue * 0.6) * 100) / 100;
+    }
+    return mas !== null ? mas : at;
   };
 
   const onSubmit = async (data: NotaFormData) => {
     try {
-      const media = calcularMedia(data.nota_mac || null, data.nota_cpp || null, data.nota_cat || null);
+      const media_as = calcularMAS(data.nota_as1 || null, data.nota_as2 || null, data.nota_as3 || null);
+      const media_trimestral = calcularMT(media_as, data.nota_at || null);
+      
       const notaData = {
         aluno_id: data.aluno_id,
         disciplina_id: data.disciplina_id,
         ano_lectivo_id: data.ano_lectivo_id,
         trimestre: data.trimestre,
-        nota_mac: data.nota_mac || null,
-        nota_cpp: data.nota_cpp || null,
-        nota_cat: data.nota_cat || null,
+        nota_as1: data.nota_as1 || null,
+        nota_as2: data.nota_as2 || null,
+        nota_as3: data.nota_as3 || null,
+        media_as,
+        nota_at: data.nota_at || null,
+        media_trimestral,
         observacoes: data.observacoes || null,
-        media,
         lancado_por: user?.id,
       };
 
@@ -167,13 +188,19 @@ const LancamentoNotas = () => {
       disciplina_id: nota.disciplina_id,
       ano_lectivo_id: nota.ano_lectivo_id,
       trimestre: nota.trimestre,
-      nota_mac: nota.nota_mac,
-      nota_cpp: nota.nota_cpp,
-      nota_cat: nota.nota_cat,
+      nota_as1: nota.nota_as1,
+      nota_as2: nota.nota_as2,
+      nota_as3: nota.nota_as3,
+      nota_at: nota.nota_at,
       observacoes: nota.observacoes || "",
     });
     setIsDialogOpen(true);
   };
+
+  // Watch form values for live calculation
+  const watchedValues = form.watch(["nota_as1", "nota_as2", "nota_as3", "nota_at"]);
+  const previewMAS = calcularMAS(watchedValues[0] || null, watchedValues[1] || null, watchedValues[2] || null);
+  const previewMT = calcularMT(previewMAS, watchedValues[3] || null);
 
   if (loading || loadingData) {
     return (
@@ -195,7 +222,7 @@ const LancamentoNotas = () => {
             </Button>
             <div>
               <h2 className="text-3xl font-bold tracking-tight">Lançamento de Notas</h2>
-              <p className="text-muted-foreground">Registar avaliações dos alunos</p>
+              <p className="text-muted-foreground">Registar avaliações dos alunos (AS1, AS2, AS3, AT)</p>
             </div>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -209,7 +236,7 @@ const LancamentoNotas = () => {
               <DialogHeader>
                 <DialogTitle>{editingNota ? "Editar Nota" : "Lançar Nova Nota"}</DialogTitle>
                 <DialogDescription>
-                  Preencha as notas do aluno
+                  Preencha as avaliações sistemáticas (AS) e avaliação trimestral (AT)
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -312,61 +339,93 @@ const LancamentoNotas = () => {
                       )}
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+
+                  {/* Avaliações Sistemáticas */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Avaliações Sistemáticas (AS)</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="nota_as1"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>AS1 (0-20)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min={0}
+                                max={20}
+                                {...field}
+                                value={field.value || ""}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="nota_as2"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>AS2 (0-20)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min={0}
+                                max={20}
+                                {...field}
+                                value={field.value || ""}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="nota_as3"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>AS3 (0-20)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                min={0}
+                                max={20}
+                                {...field}
+                                value={field.value || ""}
+                                onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Avaliação Trimestral */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Avaliação Trimestral (AT)</h4>
                     <FormField
                       control={form.control}
-                      name="nota_mac"
+                      name="nota_at"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>MAC (0-20)</FormLabel>
+                          <FormLabel>AT (0-20)</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               step="0.1"
                               min={0}
                               max={20}
-                              {...field}
-                              value={field.value || ""}
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="nota_cpp"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>CPP (0-20)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="0.1"
-                              min={0}
-                              max={20}
-                              {...field}
-                              value={field.value || ""}
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="nota_cat"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>CAT (0-20)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="0.1"
-                              min={0}
-                              max={20}
+                              className="max-w-[200px]"
                               {...field}
                               value={field.value || ""}
                               onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
@@ -377,6 +436,30 @@ const LancamentoNotas = () => {
                       )}
                     />
                   </div>
+
+                  {/* Preview das Médias */}
+                  <Card className="bg-muted/50">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calculator className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Cálculo Automático</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">MAS (Média AS):</span>
+                          <span className="ml-2 font-bold">{previewMAS?.toFixed(2) || "-"}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">MT (Média Trimestral):</span>
+                          <span className="ml-2 font-bold text-primary">{previewMT?.toFixed(2) || "-"}</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Fórmula: MT = MAS × 0.4 + AT × 0.6
+                      </p>
+                    </CardContent>
+                  </Card>
+
                   <FormField
                     control={form.control}
                     name="observacoes"
@@ -416,55 +499,59 @@ const LancamentoNotas = () => {
         <Card>
           <CardHeader>
             <CardTitle>Notas do {selectedTrimestre}º Trimestre</CardTitle>
-            <CardDescription>Lista de notas lançadas</CardDescription>
+            <CardDescription>Lista de notas lançadas (AS1, AS2, AS3 → MAS, AT → MT)</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Aluno</TableHead>
-                  <TableHead>Disciplina</TableHead>
-                  <TableHead>MAC</TableHead>
-                  <TableHead>CPP</TableHead>
-                  <TableHead>CAT</TableHead>
-                  <TableHead>Média</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {notas.length === 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
-                      Nenhuma nota lançada neste trimestre
-                    </TableCell>
+                    <TableHead>Aluno</TableHead>
+                    <TableHead>Disciplina</TableHead>
+                    <TableHead className="text-center">AS1</TableHead>
+                    <TableHead className="text-center">AS2</TableHead>
+                    <TableHead className="text-center">AS3</TableHead>
+                    <TableHead className="text-center">MAS</TableHead>
+                    <TableHead className="text-center">AT</TableHead>
+                    <TableHead className="text-center">MT</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ) : (
-                  notas.map((nota) => (
-                    <TableRow key={nota.id}>
-                      <TableCell className="font-medium">
-                        {nota.alunos?.profiles?.nome_completo}
-                      </TableCell>
-                      <TableCell>{nota.disciplinas?.nome}</TableCell>
-                      <TableCell>{nota.nota_mac?.toFixed(1) || "-"}</TableCell>
-                      <TableCell>{nota.nota_cpp?.toFixed(1) || "-"}</TableCell>
-                      <TableCell>{nota.nota_cat?.toFixed(1) || "-"}</TableCell>
-                      <TableCell className="font-semibold">
-                        {nota.media ? nota.media.toFixed(1) : "-"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(nota)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                </TableHeader>
+                <TableBody>
+                  {notas.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-muted-foreground">
+                        Nenhuma nota lançada neste trimestre
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    notas.map((nota) => (
+                      <TableRow key={nota.id}>
+                        <TableCell className="font-medium">
+                          {nota.alunos?.profiles?.nome_completo}
+                        </TableCell>
+                        <TableCell>{nota.disciplinas?.nome}</TableCell>
+                        <TableCell className="text-center">{nota.nota_as1?.toFixed(1) || "-"}</TableCell>
+                        <TableCell className="text-center">{nota.nota_as2?.toFixed(1) || "-"}</TableCell>
+                        <TableCell className="text-center">{nota.nota_as3?.toFixed(1) || "-"}</TableCell>
+                        <TableCell className="text-center font-medium">{nota.media_as?.toFixed(2) || "-"}</TableCell>
+                        <TableCell className="text-center">{nota.nota_at?.toFixed(1) || "-"}</TableCell>
+                        <TableCell className="text-center">
+                          <span className={`font-bold ${Number(nota.media_trimestral) >= 14 ? 'text-green-600' : Number(nota.media_trimestral) >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
+                            {nota.media_trimestral?.toFixed(2) || "-"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(nota)}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

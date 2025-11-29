@@ -32,7 +32,7 @@ export const AdminDashboard = () => {
         supabase.from("turmas").select("id, nome, alunos(id)", { count: "exact" }),
         supabase.from("funcionarios").select("id", { count: "exact" }),
         supabase.from("financas").select("tipo, valor, categoria"),
-        supabase.from("notas").select("media"),
+        supabase.from("notas").select("media_trimestral"),
       ]);
 
       // Calcular saldo
@@ -41,7 +41,7 @@ export const AdminDashboard = () => {
       const saldo = entradas - saidas;
 
       // Calcular média de aproveitamento
-      const medias = notasRes.data?.map(n => n.media).filter(m => m !== null) || [];
+      const medias = notasRes.data?.map(n => n.media_trimestral).filter(m => m !== null) || [];
       const mediaGeral = medias.length > 0 ? medias.reduce((acc, m) => acc + Number(m), 0) / medias.length : 0;
 
       setStats({

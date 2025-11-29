@@ -83,10 +83,12 @@ interface Turma {
 interface HistoricoNota {
   id: string;
   trimestre: number;
-  nota_mac: number | null;
-  nota_cpp: number | null;
-  nota_cat: number | null;
-  media: number | null;
+  nota_as1: number | null;
+  nota_as2: number | null;
+  nota_as3: number | null;
+  media_as: number | null;
+  nota_at: number | null;
+  media_trimestral: number | null;
   disciplinas: {
     nome: string;
     codigo: string;
@@ -197,10 +199,12 @@ const GestaoAlunos = () => {
         .select(`
           id,
           trimestre,
-          nota_mac,
-          nota_cpp,
-          nota_cat,
-          media,
+          nota_as1,
+          nota_as2,
+          nota_as3,
+          media_as,
+          nota_at,
+          media_trimestral,
           disciplinas(
             nome,
             codigo
@@ -722,11 +726,13 @@ const GestaoAlunos = () => {
                     <TableRow>
                       <TableHead>Ano Lectivo</TableHead>
                       <TableHead>Disciplina</TableHead>
-                      <TableHead>Trimestre</TableHead>
-                      <TableHead>MAC</TableHead>
-                      <TableHead>CPP</TableHead>
-                      <TableHead>CAT</TableHead>
-                      <TableHead>Média</TableHead>
+                      <TableHead>Trim.</TableHead>
+                      <TableHead>AS1</TableHead>
+                      <TableHead>AS2</TableHead>
+                      <TableHead>AS3</TableHead>
+                      <TableHead>MAS</TableHead>
+                      <TableHead>AT</TableHead>
+                      <TableHead>MT</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -735,10 +741,12 @@ const GestaoAlunos = () => {
                         <TableCell>{nota.anos_lectivos.ano}</TableCell>
                         <TableCell>{nota.disciplinas.nome}</TableCell>
                         <TableCell>{nota.trimestre}º</TableCell>
-                        <TableCell>{nota.nota_mac ?? "-"}</TableCell>
-                        <TableCell>{nota.nota_cpp ?? "-"}</TableCell>
-                        <TableCell>{nota.nota_cat ?? "-"}</TableCell>
-                        <TableCell className="font-semibold">{nota.media ?? "-"}</TableCell>
+                        <TableCell>{nota.nota_as1 ?? "-"}</TableCell>
+                        <TableCell>{nota.nota_as2 ?? "-"}</TableCell>
+                        <TableCell>{nota.nota_as3 ?? "-"}</TableCell>
+                        <TableCell>{nota.media_as ?? "-"}</TableCell>
+                        <TableCell>{nota.nota_at ?? "-"}</TableCell>
+                        <TableCell className="font-semibold">{nota.media_trimestral ?? "-"}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

@@ -430,10 +430,12 @@ export type Database = {
           id: string
           lancado_em: string | null
           lancado_por: string | null
-          media: number | null
-          nota_cat: number | null
-          nota_cpp: number | null
-          nota_mac: number | null
+          media_as: number | null
+          media_trimestral: number | null
+          nota_as1: number | null
+          nota_as2: number | null
+          nota_as3: number | null
+          nota_at: number | null
           observacoes: string | null
           trimestre: number
         }
@@ -445,10 +447,12 @@ export type Database = {
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
-          media?: number | null
-          nota_cat?: number | null
-          nota_cpp?: number | null
-          nota_mac?: number | null
+          media_as?: number | null
+          media_trimestral?: number | null
+          nota_as1?: number | null
+          nota_as2?: number | null
+          nota_as3?: number | null
+          nota_at?: number | null
           observacoes?: string | null
           trimestre: number
         }
@@ -460,10 +464,12 @@ export type Database = {
           id?: string
           lancado_em?: string | null
           lancado_por?: string | null
-          media?: number | null
-          nota_cat?: number | null
-          nota_cpp?: number | null
-          nota_mac?: number | null
+          media_as?: number | null
+          media_trimestral?: number | null
+          nota_as1?: number | null
+          nota_as2?: number | null
+          nota_as3?: number | null
+          nota_at?: number | null
           observacoes?: string | null
           trimestre?: number
         }
@@ -591,6 +597,13 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_professor_disciplinas_turma"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "professor_disciplinas_turma_id_fkey"
             columns: ["turma_id"]
             isOneToOne: false
             referencedRelation: "turmas"
@@ -787,6 +800,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calcular_media_anual: {
+        Args: {
+          p_aluno_id: string
+          p_ano_lectivo_id: string
+          p_disciplina_id: string
+        }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

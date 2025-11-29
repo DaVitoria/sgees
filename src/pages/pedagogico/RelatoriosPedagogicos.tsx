@@ -100,7 +100,7 @@ const RelatoriosPedagogicos = () => {
       if (notasError) throw notasError;
 
       const totalAlunos = alunoIds.length;
-      const medias = notas?.map((n) => n.media).filter((m) => m !== null) as number[];
+      const medias = notas?.map((n) => n.media_trimestral).filter((m) => m !== null) as number[];
       const mediaGeral = medias.length > 0 ? medias.reduce((a, b) => a + b, 0) / medias.length : 0;
       const aprovados = medias.filter((m) => m >= 10).length;
       const reprovados = medias.filter((m) => m < 10).length;
@@ -108,12 +108,12 @@ const RelatoriosPedagogicos = () => {
       const disciplinasMap = new Map();
       notas?.forEach((nota) => {
         const disc = (nota.disciplina as any)?.nome;
-        if (!disc || !nota.media) return;
+        if (!disc || !nota.media_trimestral) return;
         
         if (!disciplinasMap.has(disc)) {
           disciplinasMap.set(disc, { nome: disc, medias: [] });
         }
-        disciplinasMap.get(disc).medias.push(nota.media);
+        disciplinasMap.get(disc).medias.push(nota.media_trimestral);
       });
 
       const disciplinas = Array.from(disciplinasMap.values()).map((d) => ({

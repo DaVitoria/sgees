@@ -14,6 +14,7 @@ export const AlunoDashboard = () => {
   const [notas, setNotas] = useState<any[]>([]);
   const [performanceData, setPerformanceData] = useState<any[]>([]);
   const [trimestreData, setTrimestreData] = useState<any[]>([]);
+  const [mediaAnual, setMediaAnual] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,9 +34,12 @@ export const AlunoDashboard = () => {
           turmas(nome, classe)
         `)
         .eq("user_id", user?.id)
-        .single();
+        .maybeSingle();
 
-      if (!alunoData) return;
+      if (!alunoData) {
+        setLoading(false);
+        return;
+      }
 
       setAluno(alunoData);
 
@@ -58,8 +62,8 @@ export const AlunoDashboard = () => {
         if (!acc[disciplina]) {
           acc[disciplina] = { disciplina, notas: [] };
         }
-        if (nota.media) {
-          acc[disciplina].notas.push(nota.media);
+        if (nota.media_trimestral) {
+          acc[disciplina].notas.push(nota.media_trimestral);
         }
         return acc;
       }, {}) || {};
@@ -75,8 +79,8 @@ export const AlunoDashboard = () => {
         if (!acc[nota.trimestre]) {
           acc[nota.trimestre] = { trimestre: `${nota.trimestre}º Trim`, total: 0, count: 0 };
         }
-        if (nota.media) {
-          acc[nota.trimestre].total += Number(nota.media);
+        if (nota.media_trimestral) {
+          acc[nota.trimestre].total += Number(nota.media_trimestral);
           acc[nota.trimestre].count += 1;
         }
         return acc;
@@ -88,6 +92,12 @@ export const AlunoDashboard = () => {
       }));
       setTrimestreData(trimData);
 
+      // Calcular Média Anual (MA) - média das médias trimestrais
+      if (trimData.length > 0) {
+        const maTotal = trimData.reduce((acc, t) => acc + t.media, 0);
+        setMediaAnual(Number((maTotal / trimData.length).toFixed(2)));
+      }
+
     } catch (error) {
       console.error("Erro ao carregar dados do aluno:", error);
     } finally {
@@ -96,7 +106,7 @@ export const AlunoDashboard = () => {
   };
 
   const calcularMediaGeral = () => {
-    const medias = notas.map(n => n.media).filter(m => m !== null);
+    const medias = notas.map(n => n.media_trimestral).filter(m => m !== null);
     return medias.length > 0 ? (medias.reduce((acc, m) => acc + Number(m), 0) / medias.length).toFixed(1) : 0;
   };
 
@@ -114,8 +124,16 @@ export const AlunoDashboard = () => {
     );
   }
 
+  if (!aluno) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-muted-foreground">Nenhum registo de aluno encontrado para esta conta.</p>
+      </div>
+    );
+  }
+
   const mediaGeral = Number(calcularMediaGeral());
-  const status = getStatusAprovacao(mediaGeral);
+  const status = getStatusAprovacao(mediaAnual || mediaGeral);
 
   return (
     <div className="space-y-6">
@@ -157,8 +175,8 @@ export const AlunoDashboard = () => {
               <Award className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Média Geral</p>
-              <p className="text-lg font-bold">{mediaGeral}/20</p>
+              <p className="text-sm text-muted-foreground">Média Anual (MA)</p>
+              <p className="text-lg font-bold">{mediaAnual?.toFixed(2) || mediaGeral}/20</p>
             </div>
           </div>
         </Card>
@@ -206,7 +224,7 @@ export const AlunoDashboard = () => {
                 <YAxis domain={[0, 20]} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="media" name="Média">
+                <Bar dataKey="media" name="Média Trimestral (MT)">
                   {trimestreData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
@@ -224,17 +242,19 @@ export const AlunoDashboard = () => {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-3 px-4">Disciplina</th>
-                <th className="text-center py-3 px-4">MAC</th>
-                <th className="text-center py-3 px-4">CPP</th>
-                <th className="text-center py-3 px-4">CAT</th>
-                <th className="text-center py-3 px-4">Média</th>
-                <th className="text-center py-3 px-4">Trimestre</th>
+                <th className="text-center py-3 px-4">AS1</th>
+                <th className="text-center py-3 px-4">AS2</th>
+                <th className="text-center py-3 px-4">AS3</th>
+                <th className="text-center py-3 px-4">MAS</th>
+                <th className="text-center py-3 px-4">AT</th>
+                <th className="text-center py-3 px-4">MT</th>
+                <th className="text-center py-3 px-4">Trim.</th>
               </tr>
             </thead>
             <tbody>
               {notas.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-6 text-muted-foreground">
+                  <td colSpan={8} className="text-center py-6 text-muted-foreground">
                     Nenhuma nota lançada ainda
                   </td>
                 </tr>
@@ -242,12 +262,14 @@ export const AlunoDashboard = () => {
                 notas.map((nota, index) => (
                   <tr key={index} className="border-b hover:bg-muted/50">
                     <td className="py-3 px-4 font-medium">{nota.disciplinas?.nome}</td>
-                    <td className="text-center py-3 px-4">{nota.nota_mac?.toFixed(1) || "-"}</td>
-                    <td className="text-center py-3 px-4">{nota.nota_cpp?.toFixed(1) || "-"}</td>
-                    <td className="text-center py-3 px-4">{nota.nota_cat?.toFixed(1) || "-"}</td>
+                    <td className="text-center py-3 px-4">{nota.nota_as1?.toFixed(1) || "-"}</td>
+                    <td className="text-center py-3 px-4">{nota.nota_as2?.toFixed(1) || "-"}</td>
+                    <td className="text-center py-3 px-4">{nota.nota_as3?.toFixed(1) || "-"}</td>
+                    <td className="text-center py-3 px-4 font-medium">{nota.media_as?.toFixed(2) || "-"}</td>
+                    <td className="text-center py-3 px-4">{nota.nota_at?.toFixed(1) || "-"}</td>
                     <td className="text-center py-3 px-4">
-                      <span className={`font-bold ${Number(nota.media) >= 14 ? 'text-green-600' : Number(nota.media) >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
-                        {nota.media?.toFixed(1) || "-"}
+                      <span className={`font-bold ${Number(nota.media_trimestral) >= 14 ? 'text-green-600' : Number(nota.media_trimestral) >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
+                        {nota.media_trimestral?.toFixed(2) || "-"}
                       </span>
                     </td>
                     <td className="text-center py-3 px-4">{nota.trimestre}º</td>
@@ -257,6 +279,14 @@ export const AlunoDashboard = () => {
             </tbody>
           </table>
         </div>
+        {mediaAnual && (
+          <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              <strong>Média Anual (MA):</strong> {mediaAnual.toFixed(2)}/20 - 
+              <span className={`ml-2 font-bold ${status.color}`}>{status.label}</span>
+            </p>
+          </div>
+        )}
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
