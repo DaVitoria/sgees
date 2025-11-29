@@ -103,6 +103,7 @@ const GestaoAlunos = () => {
   const { user, loading, userRole } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   
   const [alunos, setAlunos] = useState<Aluno[]>([]);
   const [turmas, setTurmas] = useState<Turma[]>([]);
@@ -459,9 +460,26 @@ const GestaoAlunos = () => {
     );
   }
 
+  useEffect(() => {
+    if (!loading && (!user || (userRole !== "admin" && userRole !== "secretario"))) {
+      setShouldRedirect(true);
+    }
+  }, [loading, user, userRole]);
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate("/dashboard");
+    }
+  }, [shouldRedirect, navigate]);
+
   if (!user || (userRole !== "admin" && userRole !== "secretario")) {
-    navigate("/dashboard");
-    return null;
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <p className="text-muted-foreground">A redirecionar...</p>
+        </div>
+      </Layout>
+    );
   }
 
   return (
