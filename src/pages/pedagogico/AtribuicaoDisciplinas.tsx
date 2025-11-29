@@ -66,9 +66,9 @@ const AtribuicaoDisciplinas = () => {
           .from("professor_disciplinas")
           .select(`
             *,
-            professores(id, user_id, profiles(nome_completo)),
-            disciplinas(nome, codigo),
-            turmas(nome, classe),
+            professores!professor_id(id, user_id, profiles(nome_completo)),
+            disciplinas!disciplina_id(nome, codigo),
+            turmas!turma_id(nome, classe),
             anos_lectivos!ano_lectivo_id(ano)
           `)
           .order("created_at", { ascending: false }),
