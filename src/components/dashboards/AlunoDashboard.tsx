@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar, History, CheckCircle, XCircle, Clock, ArrowRight } from "lucide-react";
+import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar, History, CheckCircle, XCircle, Clock, ArrowRight, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -425,6 +425,20 @@ export const AlunoDashboard = () => {
               <p className="text-sm text-muted-foreground mt-1">
                 Por favor, contacte a secretaria da escola para verificar o estado da sua matrícula e activar o acesso ao portal.
               </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              <Button variant="outline" className="flex-1" asChild>
+                <a href="tel:+258841234567">
+                  <Phone className="h-4 w-4 mr-2" />
+                  +258 84 123 4567
+                </a>
+              </Button>
+              <Button variant="outline" className="flex-1" asChild>
+                <a href="mailto:secretaria@escola.co.mz">
+                  <Mail className="h-4 w-4 mr-2" />
+                  secretaria@escola.co.mz
+                </a>
+              </Button>
             </div>
           </CardContent>
         </Card>
