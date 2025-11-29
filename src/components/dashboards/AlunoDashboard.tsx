@@ -396,8 +396,38 @@ export const AlunoDashboard = () => {
 
   if (!aluno) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-muted-foreground">Nenhum registo de aluno encontrado para esta conta.</p>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
+        <Card className="max-w-md w-full text-center">
+          <CardHeader>
+            <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+              <GraduationCap className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <CardTitle className="text-xl">Portal do Aluno</CardTitle>
+            <CardDescription>
+              Nenhum registo de aluno encontrado para esta conta
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">O que pode estar a acontecer:</strong>
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>A sua conta ainda não foi associada a um registo de aluno</li>
+                <li>O processo de matrícula ainda não foi concluído</li>
+                <li>A secretaria ainda não activou o seu acesso</li>
+              </ul>
+            </div>
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-left">
+              <p className="text-sm">
+                <strong className="text-primary">Próximos passos:</strong>
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Por favor, contacte a secretaria da escola para verificar o estado da sua matrícula e activar o acesso ao portal.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
