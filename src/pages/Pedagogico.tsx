@@ -42,7 +42,7 @@ const Pedagogico = () => {
       color: "text-success",
       bgColor: "bg-success/10",
       route: "/pedagogico/lancamento-notas",
-      allowedRoles: ["admin", "professor"],
+      allowedRoles: ["professor"],
     },
     {
       title: "Relatórios Pedagógicos",
