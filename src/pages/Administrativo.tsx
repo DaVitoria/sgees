@@ -62,6 +62,7 @@ const Administrativo = () => {
       icon: FileText,
       color: "text-primary",
       bgColor: "bg-primary/10",
+      path: "/administrativo/documentos",
     },
     {
       title: "Relatórios",
