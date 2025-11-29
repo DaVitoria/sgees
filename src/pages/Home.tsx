@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
 
 interface Noticia {
   id: string;
@@ -51,6 +52,14 @@ interface OrgStructure {
   turmas_por_classe: TurmaClasse[] | null;
 }
 
+interface MonthlyFinancial {
+  mes: string;
+  mes_ano: string;
+  entradas: number;
+  saidas: number;
+  saldo: number;
+}
+
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-MZ', {
     style: 'currency',
@@ -59,12 +68,23 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
+const formatCurrencyShort = (value: number) => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(0)}K`;
+  }
+  return value.toFixed(0);
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [stats, setStats] = useState<SchoolStats | null>(null);
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary | null>(null);
   const [orgStructure, setOrgStructure] = useState<OrgStructure | null>(null);
+  const [monthlyFinancial, setMonthlyFinancial] = useState<MonthlyFinancial[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -72,7 +92,7 @@ const Home = () => {
       setLoading(true);
       
       // Fetch all data in parallel
-      const [noticiasRes, statsRes, financialRes, orgRes] = await Promise.all([
+      const [noticiasRes, statsRes, financialRes, orgRes, monthlyRes] = await Promise.all([
         supabase
           .from("noticias")
           .select("*")
@@ -81,13 +101,15 @@ const Home = () => {
           .limit(3),
         supabase.rpc("get_school_statistics"),
         supabase.rpc("get_financial_summary"),
-        supabase.rpc("get_organizational_structure")
+        supabase.rpc("get_organizational_structure"),
+        supabase.rpc("get_monthly_financial_evolution")
       ]);
       
       if (noticiasRes.data) setNoticias(noticiasRes.data);
       if (statsRes.data) setStats(statsRes.data as unknown as SchoolStats);
       if (financialRes.data) setFinancialSummary(financialRes.data as unknown as FinancialSummary);
       if (orgRes.data) setOrgStructure(orgRes.data as unknown as OrgStructure);
+      if (monthlyRes.data) setMonthlyFinancial(monthlyRes.data as unknown as MonthlyFinancial[]);
       
       setLoading(false);
     };
@@ -283,6 +305,114 @@ const Home = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Financial Charts */}
+          {monthlyFinancial.length > 0 && (
+            <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Bar Chart - Monthly Comparison */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg">Comparativo Mensal</CardTitle>
+                  <CardDescription>Entradas vs Saídas nos últimos 12 meses</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <Skeleton className="h-[300px] w-full" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={monthlyFinancial}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis 
+                          dataKey="mes" 
+                          tick={{ fontSize: 12 }}
+                          className="fill-muted-foreground"
+                        />
+                        <YAxis 
+                          tickFormatter={(value) => formatCurrencyShort(value)}
+                          tick={{ fontSize: 12 }}
+                          className="fill-muted-foreground"
+                        />
+                        <Tooltip 
+                          formatter={(value: number) => formatCurrency(value)}
+                          labelFormatter={(label) => `Mês: ${label}`}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                        />
+                        <Legend />
+                        <Bar 
+                          dataKey="entradas" 
+                          name="Entradas" 
+                          fill="hsl(142, 76%, 36%)" 
+                          radius={[4, 4, 0, 0]}
+                        />
+                        <Bar 
+                          dataKey="saidas" 
+                          name="Saídas" 
+                          fill="hsl(0, 84%, 60%)" 
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Area Chart - Balance Evolution */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg">Evolução do Saldo</CardTitle>
+                  <CardDescription>Saldo mensal ao longo do tempo</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loading ? (
+                    <Skeleton className="h-[300px] w-full" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={monthlyFinancial}>
+                        <defs>
+                          <linearGradient id="colorSaldo" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="hsl(221, 83%, 53%)" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis 
+                          dataKey="mes" 
+                          tick={{ fontSize: 12 }}
+                          className="fill-muted-foreground"
+                        />
+                        <YAxis 
+                          tickFormatter={(value) => formatCurrencyShort(value)}
+                          tick={{ fontSize: 12 }}
+                          className="fill-muted-foreground"
+                        />
+                        <Tooltip 
+                          formatter={(value: number) => formatCurrency(value)}
+                          labelFormatter={(label) => `Mês: ${label}`}
+                          contentStyle={{
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="saldo" 
+                          name="Saldo"
+                          stroke="hsl(221, 83%, 53%)" 
+                          fillOpacity={1} 
+                          fill="url(#colorSaldo)" 
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </section>
 
