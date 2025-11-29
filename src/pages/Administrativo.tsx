@@ -54,6 +54,7 @@ const Administrativo = () => {
       icon: Package,
       color: "text-warning",
       bgColor: "bg-warning/10",
+      path: "/administrativo/inventario",
     },
     {
       title: "Documentos",
