@@ -924,6 +924,26 @@ export type Database = {
       get_financial_summary: { Args: never; Returns: Json }
       get_monthly_financial_evolution: { Args: never; Returns: Json }
       get_organizational_structure: { Args: never; Returns: Json }
+      get_profiles_with_audit: {
+        Args: { limit_count?: number; offset_count?: number }
+        Returns: {
+          bi: string | null
+          created_at: string | null
+          data_nascimento: string | null
+          email: string | null
+          endereco: string | null
+          id: string
+          nome_completo: string
+          telefone: string | null
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_school_statistics: { Args: never; Returns: Json }
       has_role: {
         Args: {
