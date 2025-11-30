@@ -620,6 +620,33 @@ export type Database = {
         }
         Relationships: []
       }
+      organograma: {
+        Row: {
+          cargo: string
+          created_at: string | null
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string | null
+        }
+        Insert: {
+          cargo: string
+          created_at?: string | null
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string | null
+        }
+        Update: {
+          cargo?: string
+          created_at?: string | null
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       professor_disciplinas: {
         Row: {
           ano_lectivo_id: string

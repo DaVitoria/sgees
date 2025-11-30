@@ -16,6 +16,13 @@ interface Noticia {
   data_publicacao: string;
 }
 
+interface OrganogramaItem {
+  id: string;
+  cargo: string;
+  nome: string;
+  ordem: number;
+}
+
 interface SchoolStats {
   total_alunos: number;
   total_professores: number;
@@ -88,6 +95,7 @@ const Home = () => {
   const [financialSummary, setFinancialSummary] = useState<FinancialSummary | null>(null);
   const [orgStructure, setOrgStructure] = useState<OrgStructure | null>(null);
   const [monthlyFinancial, setMonthlyFinancial] = useState<MonthlyFinancial[]>([]);
+  const [organograma, setOrganograma] = useState<OrganogramaItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const handleExportPDF = () => {
@@ -121,7 +129,7 @@ const Home = () => {
       setLoading(true);
       
       // Fetch all data in parallel
-      const [noticiasRes, statsRes, financialRes, orgRes, monthlyRes] = await Promise.all([
+      const [noticiasRes, statsRes, financialRes, orgRes, monthlyRes, organogramaRes] = await Promise.all([
         supabase
           .from("noticias")
           .select("*")
@@ -131,7 +139,8 @@ const Home = () => {
         supabase.rpc("get_school_statistics"),
         supabase.rpc("get_financial_summary"),
         supabase.rpc("get_organizational_structure"),
-        supabase.rpc("get_monthly_financial_evolution")
+        supabase.rpc("get_monthly_financial_evolution"),
+        supabase.from("organograma").select("*").order("ordem", { ascending: true })
       ]);
       
       if (noticiasRes.data) setNoticias(noticiasRes.data);
@@ -139,6 +148,7 @@ const Home = () => {
       if (financialRes.data) setFinancialSummary(financialRes.data as unknown as FinancialSummary);
       if (orgRes.data) setOrgStructure(orgRes.data as unknown as OrgStructure);
       if (monthlyRes.data) setMonthlyFinancial(monthlyRes.data as unknown as MonthlyFinancial[]);
+      if (organogramaRes.data) setOrganograma(organogramaRes.data);
       
       setLoading(false);
     };
@@ -465,21 +475,73 @@ const Home = () => {
             </p>
           </div>
 
-          {/* Direction */}
+          {/* Hierarchical Organogram */}
           <div className="mb-12">
-            <h3 className="text-xl font-semibold text-foreground mb-6 text-center">Direcção</h3>
-            <div className="flex flex-wrap justify-center gap-4">
-              {orgStructure?.direcao?.map((membro, index) => (
-                <Card key={index} className="w-64 shadow-lg">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 mx-auto rounded-full gradient-primary flex items-center justify-center mb-3">
-                      <UserCircle className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="font-semibold text-foreground">{membro.cargo}</div>
-                    <div className="text-sm text-muted-foreground">{membro.departamento}</div>
-                  </CardContent>
-                </Card>
+            <div className="flex flex-col items-center space-y-2">
+              {organograma.map((item, index) => (
+                <div key={item.id} className="flex flex-col items-center">
+                  {index > 0 && (
+                    <div className="w-px h-4 bg-border" />
+                  )}
+                  <Card className="w-72 shadow-lg border-2 border-primary/20 hover:border-primary/40 transition-colors">
+                    <CardContent className="p-5 text-center">
+                      <div className="w-12 h-12 mx-auto rounded-full gradient-primary flex items-center justify-center mb-3">
+                        <UserCircle className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="font-semibold text-foreground">{item.cargo}</div>
+                      <div className="text-sm text-primary font-medium">{item.nome}</div>
+                    </CardContent>
+                  </Card>
+                </div>
               ))}
+              
+              {/* Stats Section */}
+              {organograma.length > 0 && (
+                <>
+                  <div className="w-px h-4 bg-border" />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl">
+                    <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                      <CardContent className="p-5 text-center">
+                        <div className="w-10 h-10 mx-auto rounded-full gradient-accent flex items-center justify-center mb-2">
+                          <GraduationCap className="h-5 w-5 text-white" />
+                        </div>
+                        {loading ? (
+                          <Skeleton className="h-8 w-12 mx-auto mb-1" />
+                        ) : (
+                          <div className="text-2xl font-bold text-primary">{stats?.total_professores || 0}</div>
+                        )}
+                        <div className="text-sm text-muted-foreground">Professores</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                      <CardContent className="p-5 text-center">
+                        <div className="w-10 h-10 mx-auto rounded-full bg-amber-500 flex items-center justify-center mb-2">
+                          <Users className="h-5 w-5 text-white" />
+                        </div>
+                        {loading ? (
+                          <Skeleton className="h-8 w-12 mx-auto mb-1" />
+                        ) : (
+                          <div className="text-2xl font-bold text-primary">{stats?.total_alunos || 0}</div>
+                        )}
+                        <div className="text-sm text-muted-foreground">Alunos</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                      <CardContent className="p-5 text-center">
+                        <div className="w-10 h-10 mx-auto rounded-full bg-emerald-500 flex items-center justify-center mb-2">
+                          <Building2 className="h-5 w-5 text-white" />
+                        </div>
+                        {loading ? (
+                          <Skeleton className="h-8 w-12 mx-auto mb-1" />
+                        ) : (
+                          <div className="text-2xl font-bold text-primary">{stats?.total_funcionarios || 0}</div>
+                        )}
+                        <div className="text-sm text-muted-foreground">Funcionários</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

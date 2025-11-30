@@ -4,7 +4,7 @@ import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Users, GraduationCap, FileText, Package, DollarSign, BarChart, UserPlus, Shield } from "lucide-react";
+import { Users, GraduationCap, FileText, Package, DollarSign, BarChart, UserPlus, Shield, Network } from "lucide-react";
 
 const Administrativo = () => {
   const { user, loading, userRole } = useAuth();
@@ -81,6 +81,14 @@ const Administrativo = () => {
       color: "text-accent",
       bgColor: "bg-accent/10",
       path: "/administrativo/relatorios",
+    },
+    {
+      title: "Organograma",
+      description: "Configurar a estrutura organizacional da escola",
+      icon: Network,
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
+      path: "/administrativo/organograma",
     },
   ];
 
