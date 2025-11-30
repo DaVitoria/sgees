@@ -624,6 +624,7 @@ export type Database = {
         Row: {
           cargo: string
           created_at: string | null
+          foto_url: string | null
           id: string
           nome: string
           ordem: number
@@ -632,6 +633,7 @@ export type Database = {
         Insert: {
           cargo: string
           created_at?: string | null
+          foto_url?: string | null
           id?: string
           nome: string
           ordem?: number
@@ -640,6 +642,7 @@ export type Database = {
         Update: {
           cargo?: string
           created_at?: string | null
+          foto_url?: string | null
           id?: string
           nome?: string
           ordem?: number

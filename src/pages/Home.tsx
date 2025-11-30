@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
 import { generateFinancialReportPDF } from "@/utils/generateFinancialReportPDF";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +22,7 @@ interface OrganogramaItem {
   cargo: string;
   nome: string;
   ordem: number;
+  foto_url: string | null;
 }
 
 interface SchoolStats {
@@ -478,22 +480,34 @@ const Home = () => {
           {/* Hierarchical Organogram */}
           <div className="mb-12">
             <div className="flex flex-col items-center space-y-2">
-              {organograma.map((item, index) => (
-                <div key={item.id} className="flex flex-col items-center">
-                  {index > 0 && (
-                    <div className="w-px h-4 bg-border" />
-                  )}
-                  <Card className="w-72 shadow-lg border-2 border-primary/20 hover:border-primary/40 transition-colors">
-                    <CardContent className="p-5 text-center">
-                      <div className="w-12 h-12 mx-auto rounded-full gradient-primary flex items-center justify-center mb-3">
-                        <UserCircle className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="font-semibold text-foreground">{item.cargo}</div>
-                      <div className="text-sm text-primary font-medium">{item.nome}</div>
-                    </CardContent>
-                  </Card>
-                </div>
-              ))}
+              {organograma.map((item, index) => {
+                const initials = item.nome
+                  .split(' ')
+                  .map(n => n[0])
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase();
+                
+                return (
+                  <div key={item.id} className="flex flex-col items-center">
+                    {index > 0 && (
+                      <div className="w-px h-4 bg-border" />
+                    )}
+                    <Card className="w-72 shadow-lg border-2 border-primary/20 hover:border-primary/40 transition-colors">
+                      <CardContent className="p-5 text-center">
+                        <Avatar className="h-16 w-16 mx-auto mb-3">
+                          <AvatarImage src={item.foto_url || undefined} alt={item.nome} />
+                          <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="font-semibold text-foreground">{item.cargo}</div>
+                        <div className="text-sm text-primary font-medium">{item.nome}</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                );
+              })}
               
               {/* Stats Section */}
               {organograma.length > 0 && (
