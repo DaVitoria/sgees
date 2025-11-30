@@ -480,34 +480,72 @@ const Home = () => {
           {/* Hierarchical Organogram */}
           <div className="mb-12">
             <div className="flex flex-col items-center space-y-2">
-              {organograma.map((item, index) => {
-                const initials = item.nome
+              {(() => {
+                // Separate top positions from adjuntos
+                const topPositions = organograma.filter(item => 
+                  !item.cargo.toLowerCase().includes('adjunto')
+                );
+                const adjuntos = organograma.filter(item => 
+                  item.cargo.toLowerCase().includes('adjunto')
+                );
+
+                const getInitials = (nome: string) => nome
                   .split(' ')
                   .map(n => n[0])
                   .slice(0, 2)
                   .join('')
                   .toUpperCase();
-                
-                return (
-                  <div key={item.id} className="flex flex-col items-center">
-                    {index > 0 && (
-                      <div className="w-px h-4 bg-border" />
-                    )}
-                    <Card className="w-72 shadow-lg border-2 border-primary/20 hover:border-primary/40 transition-colors">
-                      <CardContent className="p-5 text-center">
-                        <Avatar className="h-16 w-16 mx-auto mb-3">
-                          <AvatarImage src={item.foto_url || undefined} alt={item.nome} />
-                          <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="font-semibold text-foreground">{item.cargo}</div>
-                        <div className="text-sm text-primary font-medium">{item.nome}</div>
-                      </CardContent>
-                    </Card>
-                  </div>
+
+                const renderCard = (item: typeof organograma[0]) => (
+                  <Card className="w-64 shadow-lg border-2 border-primary/20 hover:border-primary/40 transition-colors">
+                    <CardContent className="p-5 text-center">
+                      <Avatar className="h-16 w-16 mx-auto mb-3">
+                        <AvatarImage src={item.foto_url || undefined} alt={item.nome} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                          {getInitials(item.nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="font-semibold text-foreground text-sm">{item.cargo}</div>
+                      <div className="text-sm text-primary font-medium">{item.nome}</div>
+                    </CardContent>
+                  </Card>
                 );
-              })}
+
+                return (
+                  <>
+                    {/* Top positions (President, Director) */}
+                    {topPositions.map((item, index) => (
+                      <div key={item.id} className="flex flex-col items-center">
+                        {index > 0 && <div className="w-px h-4 bg-border" />}
+                        {renderCard(item)}
+                      </div>
+                    ))}
+
+                    {/* Adjuntos side by side */}
+                    {adjuntos.length > 0 && (
+                      <>
+                        <div className="w-px h-4 bg-border" />
+                        <div className="flex items-center justify-center gap-2">
+                          {/* Left branch line */}
+                          <div className="hidden sm:block w-24 h-px bg-border" />
+                          
+                          <div className="flex flex-col sm:flex-row items-center gap-4">
+                            {adjuntos.map((item, index) => (
+                              <div key={item.id} className="flex flex-col items-center">
+                                {index > 0 && <div className="sm:hidden w-px h-4 bg-border" />}
+                                {renderCard(item)}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {/* Right branch line */}
+                          <div className="hidden sm:block w-24 h-px bg-border" />
+                        </div>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
               
               {/* Stats Section */}
               {organograma.length > 0 && (

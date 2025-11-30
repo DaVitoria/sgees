@@ -309,25 +309,60 @@ const Organograma = () => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center space-y-4">
-              {items.map((item, index) => (
-                <div key={item.id} className="flex flex-col items-center">
-                  {index > 0 && (
-                    <div className="w-px h-6 bg-border" />
-                  )}
-                  <Card className="w-64 shadow-md border-2 border-primary/20">
+              {(() => {
+                const topPositions = items.filter(item => 
+                  !item.cargo.toLowerCase().includes('adjunto')
+                );
+                const adjuntos = items.filter(item => 
+                  item.cargo.toLowerCase().includes('adjunto')
+                );
+
+                const renderCard = (item: OrganogramaItem) => (
+                  <Card className="w-56 shadow-md border-2 border-primary/20">
                     <CardContent className="p-4 text-center">
-                      <Avatar className="h-16 w-16 mx-auto mb-2">
+                      <Avatar className="h-14 w-14 mx-auto mb-2">
                         <AvatarImage src={item.foto_url || undefined} alt={item.nome} />
-                        <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                        <AvatarFallback className="bg-primary text-primary-foreground">
                           {getInitials(item.nome)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="font-semibold text-foreground">{item.cargo}</div>
-                      <div className="text-sm text-primary">{item.nome}</div>
+                      <div className="font-semibold text-foreground text-sm">{item.cargo}</div>
+                      <div className="text-xs text-primary">{item.nome}</div>
                     </CardContent>
                   </Card>
-                </div>
-              ))}
+                );
+
+                return (
+                  <>
+                    {/* Top positions */}
+                    {topPositions.map((item, index) => (
+                      <div key={item.id} className="flex flex-col items-center">
+                        {index > 0 && <div className="w-px h-6 bg-border" />}
+                        {renderCard(item)}
+                      </div>
+                    ))}
+
+                    {/* Adjuntos side by side */}
+                    {adjuntos.length > 0 && (
+                      <>
+                        <div className="w-px h-6 bg-border" />
+                        <div className="flex items-center justify-center gap-2">
+                          <div className="hidden sm:block w-16 h-px bg-border" />
+                          <div className="flex flex-col sm:flex-row items-center gap-4">
+                            {adjuntos.map((item, index) => (
+                              <div key={item.id} className="flex flex-col items-center">
+                                {index > 0 && <div className="sm:hidden w-px h-4 bg-border" />}
+                                {renderCard(item)}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="hidden sm:block w-16 h-px bg-border" />
+                        </div>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
               
               {/* Stats Cards */}
               {items.length > 0 && (
