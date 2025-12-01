@@ -72,10 +72,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
+    if (!error && data.user) {
+      // Buscar role do utilizador
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      
+      // Redirecionar baseado no role
+      if (roleData?.role === 'aluno') {
+        navigate('/aluno');
+      } else if (roleData?.role === 'professor') {
+        navigate('/professor');
+      } else if (roleData?.role) {
+        navigate('/dashboard');
+      } else {
+        // Sem role, redirecionar para auto-matrícula
+        navigate('/auto-matricula');
+      }
+    }
+    
     return { error };
   };
 

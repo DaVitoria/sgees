@@ -23,10 +23,10 @@ const Login = () => {
     setLoading(true);
     const { error } = await signIn(email, password);
     if (error) {
-      toast.error("Erro: " + error.message);
+      toast.error("Erro ao entrar: " + error.message);
     } else {
-      toast.success("Login realizado!");
-      navigate("/dashboard");
+      toast.success("Login realizado com sucesso!");
+      // O redirecionamento é feito automaticamente no signIn
     }
     setLoading(false);
   };
@@ -36,9 +36,17 @@ const Login = () => {
     setLoading(true);
     const { error } = await signUp(email, password, nomeCompleto);
     if (error) {
-      toast.error("Erro: " + error.message);
+      if (error.message.includes("already registered")) {
+        toast.error("Este email já está registado. Por favor, faça login.");
+      } else {
+        toast.error("Erro ao criar conta: " + error.message);
+      }
     } else {
-      toast.success("Conta criada! Faça login.");
+      toast.success("Conta criada com sucesso! Pode fazer login agora.");
+      // Limpar campos após sucesso
+      setEmail("");
+      setPassword("");
+      setNomeCompleto("");
     }
     setLoading(false);
   };

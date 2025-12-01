@@ -14,8 +14,14 @@ const Dashboard = () => {
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
+    } else if (!loading && user && userRole === 'aluno') {
+      // Redirecionar alunos para seu portal específico
+      navigate("/aluno");
+    } else if (!loading && user && userRole === 'professor') {
+      // Redirecionar professores para seu portal específico
+      navigate("/professor");
     } else if (!loading && user && !userRole) {
-      // Redirect users without role to auto-enrollment
+      // Utilizadores sem role, redirecionar para auto-matrícula
       navigate("/auto-matricula");
     }
   }, [user, loading, userRole, navigate]);

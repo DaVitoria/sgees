@@ -46,17 +46,17 @@ const AutoMatricula = () => {
     try {
       const { data: alunoData } = await supabase
         .from("alunos")
-        .select("id")
+        .select("id, estado")
         .eq("user_id", user?.id)
         .maybeSingle();
 
-      if (alunoData) {
+      if (alunoData && alunoData.estado === 'activo') {
         setHasExistingEnrollment(true);
         toast({
           title: "Matrícula já existe",
-          description: "Você já possui uma matrícula registrada.",
+          description: "Você já possui uma matrícula activa registrada.",
         });
-        navigate("/dashboard");
+        navigate("/aluno");
       }
     } catch (error) {
       console.error("Error checking enrollment:", error);
