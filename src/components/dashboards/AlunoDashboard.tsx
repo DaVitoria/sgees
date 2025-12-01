@@ -61,6 +61,7 @@ export const AlunoDashboard = () => {
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [historico, setHistorico] = useState<HistoricoAno[]>([]);
   const [progressaoData, setProgressaoData] = useState<any[]>([]);
+  const [exames, setExames] = useState<any[]>([]);
   
   // Filter states
   const [anosLectivos, setAnosLectivos] = useState<AnoLectivo[]>([]);
@@ -147,6 +148,19 @@ export const AlunoDashboard = () => {
         .order("trimestre");
 
       setNotas(notasData || []);
+
+      // Buscar exames do aluno
+      const { data: examesData } = await supabase
+        .from("exames")
+        .select(`
+          *,
+          disciplinas!disciplina_id(nome, codigo),
+          anos_lectivos!ano_lectivo_id(id, ano)
+        `)
+        .eq("aluno_id", alunoData.id)
+        .order("data_exame", { ascending: true, nullsFirst: false });
+
+      setExames(examesData || []);
 
       // Compute academic history
       computeHistorico(matriculasData as unknown as Matricula[], notasData || [], anosData || []);
@@ -907,6 +921,205 @@ export const AlunoDashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Exames Section */}
+      {exames.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5" />
+              Exames
+            </CardTitle>
+            <CardDescription>
+              Exames agendados e resultados das classes 9ª, 10ª e 12ª
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Exames Agendados */}
+              {exames.filter(e => e.estado === 'agendado').length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-yellow-600" />
+                    Exames Agendados
+                  </h3>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {exames
+                      .filter(e => e.estado === 'agendado')
+                      .map((exame) => (
+                        <div
+                          key={exame.id}
+                          className="p-4 border border-yellow-200 rounded-lg bg-yellow-50"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="font-semibold text-sm">
+                                {exame.disciplinas?.nome}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {exame.tipo_exame.charAt(0).toUpperCase() + exame.tipo_exame.slice(1)}
+                              </p>
+                            </div>
+                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                              Agendado
+                            </Badge>
+                          </div>
+                          {exame.data_exame && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                              <Calendar className="h-3 w-3" />
+                              <span>
+                                {new Date(exame.data_exame).toLocaleDateString('pt-MZ', {
+                                  day: '2-digit',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                          )}
+                          {exame.local_exame && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                              <Award className="h-3 w-3" />
+                              <span>{exame.local_exame}</span>
+                            </div>
+                          )}
+                          {exame.numero_pauta && (
+                            <div className="text-xs text-muted-foreground">
+                              <span className="font-medium">Nº Pauta:</span> {exame.numero_pauta}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Exames Realizados / Com Resultado */}
+              {exames.filter(e => ['realizado', 'aprovado', 'reprovado'].includes(e.estado)).length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    Resultados de Exames
+                  </h3>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {exames
+                      .filter(e => ['realizado', 'aprovado', 'reprovado'].includes(e.estado))
+                      .map((exame) => {
+                        const isAprovado = exame.estado === 'aprovado';
+                        const isReprovado = exame.estado === 'reprovado';
+                        const cardClass = isAprovado
+                          ? 'border-green-200 bg-green-50'
+                          : isReprovado
+                          ? 'border-red-200 bg-red-50'
+                          : 'border-blue-200 bg-blue-50';
+
+                        return (
+                          <div
+                            key={exame.id}
+                            className={`p-4 border rounded-lg ${cardClass}`}
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <div>
+                                <p className="font-semibold text-sm">
+                                  {exame.disciplinas?.nome}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {exame.tipo_exame.charAt(0).toUpperCase() + exame.tipo_exame.slice(1)} - {exame.classe}ª Classe
+                                </p>
+                              </div>
+                              <Badge
+                                variant={isAprovado ? 'outline' : isReprovado ? 'destructive' : 'default'}
+                                className={
+                                  isAprovado
+                                    ? 'bg-green-100 text-green-800 border-green-300'
+                                    : isReprovado
+                                    ? 'bg-red-100 text-red-800 border-red-300'
+                                    : 'bg-blue-100 text-blue-800 border-blue-300'
+                                }
+                              >
+                                {isAprovado ? (
+                                  <>
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Aprovado
+                                  </>
+                                ) : isReprovado ? (
+                                  <>
+                                    <XCircle className="h-3 w-3 mr-1" />
+                                    Reprovado
+                                  </>
+                                ) : (
+                                  'Realizado'
+                                )}
+                              </Badge>
+                            </div>
+
+                            {exame.nota_exame !== null && (
+                              <div className="mb-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    Nota do Exame:
+                                  </span>
+                                  <span className={`text-lg font-bold ${
+                                    exame.nota_exame >= 10 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {exame.nota_exame.toFixed(1)}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {exame.nota_final !== null && (
+                              <div className="mb-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    Nota Final:
+                                  </span>
+                                  <span className={`text-lg font-bold ${
+                                    exame.nota_final >= 10 ? 'text-green-600' : 'text-red-600'
+                                  }`}>
+                                    {exame.nota_final.toFixed(1)}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {exame.data_exame && (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+                                <Calendar className="h-3 w-3" />
+                                <span>
+                                  {new Date(exame.data_exame).toLocaleDateString('pt-MZ', {
+                                    day: '2-digit',
+                                    month: 'long',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                            )}
+
+                            {exame.observacoes && (
+                              <div className="mt-2 pt-2 border-t border-gray-200">
+                                <p className="text-xs text-muted-foreground">
+                                  <span className="font-medium">Obs:</span> {exame.observacoes}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {/* Mensagem se não houver exames */}
+              {exames.filter(e => ['agendado', 'realizado', 'aprovado', 'reprovado'].includes(e.estado)).length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  <GraduationCap className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>Nenhum exame registado</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="p-6">
