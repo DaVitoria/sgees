@@ -11,15 +11,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { UserPlus, Loader2, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
+import { z } from "zod";
+
+const matriculaSchema = z.object({
+  nome_completo: z.string().trim().min(3, "Nome deve ter pelo menos 3 caracteres").max(100, "Nome deve ter no máximo 100 caracteres"),
+  bi: z.string().trim().min(5, "BI deve ter pelo menos 5 caracteres").max(20, "BI deve ter no máximo 20 caracteres"),
+  data_nascimento: z.string().min(1, "Data de nascimento é obrigatória"),
+  telefone: z.string().trim().min(9, "Telefone deve ter pelo menos 9 dígitos").max(15, "Telefone deve ter no máximo 15 dígitos"),
+  endereco: z.string().trim().min(5, "Endereço deve ter pelo menos 5 caracteres").max(200, "Endereço deve ter no máximo 200 caracteres"),
+  encarregado_nome: z.string().trim().min(3, "Nome do encarregado deve ter pelo menos 3 caracteres").max(100, "Nome deve ter no máximo 100 caracteres"),
+  encarregado_telefone: z.string().trim().min(9, "Telefone deve ter pelo menos 9 dígitos").max(15, "Telefone deve ter no máximo 15 dígitos"),
+  encarregado_parentesco: z.string().trim().min(2, "Parentesco deve ter pelo menos 2 caracteres").max(50, "Parentesco deve ter no máximo 50 caracteres"),
+  classe: z.string().min(1, "Classe é obrigatória"),
+  ano_lectivo_id: z.string().min(1, "Ano lectivo é obrigatório"),
+  observacoes: z.string().trim().max(500, "Observações devem ter no máximo 500 caracteres").optional(),
+});
 
 const AutoMatricula = () => {
-  const { user } = useAuth();
+  const { user, userRole, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [hasExistingEnrollment, setHasExistingEnrollment] = useState(false);
   const [anosLectivos, setAnosLectivos] = useState<any[]>([]);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
   const [formData, setFormData] = useState({
     nome_completo: "",
@@ -36,11 +52,28 @@ const AutoMatricula = () => {
   });
 
   useEffect(() => {
+    // Redirect if user is not logged in
+    if (!authLoading && !user) {
+      navigate("/login");
+      return;
+    }
+
+    // Redirect if user has a role other than aluno
+    if (!authLoading && user && userRole && userRole !== 'aluno') {
+      toast({
+        title: "Acesso Negado",
+        description: "Esta página é apenas para alunos.",
+        variant: "destructive",
+      });
+      navigate("/dashboard");
+      return;
+    }
+
     if (user) {
       checkExistingEnrollment();
       fetchAnosLectivos();
     }
-  }, [user]);
+  }, [user, userRole, authLoading]);
 
   const checkExistingEnrollment = async () => {
     try {
@@ -85,24 +118,21 @@ const AutoMatricula = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setValidationErrors({});
 
     try {
-      // Validation
-      if (!formData.nome_completo || !formData.bi || !formData.data_nascimento || 
-          !formData.encarregado_nome || !formData.encarregado_telefone || 
-          !formData.classe || !formData.ano_lectivo_id) {
-        throw new Error("Por favor, preencha todos os campos obrigatórios");
-      }
+      // Validate with zod
+      const validatedData = matriculaSchema.parse(formData);
 
       // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
-          nome_completo: formData.nome_completo,
-          bi: formData.bi,
-          data_nascimento: formData.data_nascimento,
-          telefone: formData.telefone,
-          endereco: formData.endereco,
+          nome_completo: validatedData.nome_completo,
+          bi: validatedData.bi,
+          data_nascimento: validatedData.data_nascimento,
+          telefone: validatedData.telefone,
+          endereco: validatedData.endereco,
         })
         .eq("id", user?.id);
 
@@ -169,23 +199,42 @@ const AutoMatricula = () => {
       }, 2000);
 
     } catch (error: any) {
-      console.error("Error submitting enrollment:", error);
-      toast({
-        title: "Erro ao submeter matrícula",
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.issues.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setValidationErrors(newErrors);
+        toast({
+          title: "Erro de validação",
+          description: "Por favor, verifique os campos do formulário.",
+          variant: "destructive",
+        });
+      } else {
+        console.error("Error submitting enrollment:", error);
+        toast({
+          title: "Erro ao submeter matrícula",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   if (hasExistingEnrollment) {
@@ -215,9 +264,16 @@ const AutoMatricula = () => {
                   <Input
                     id="nome_completo"
                     value={formData.nome_completo}
-                    onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, nome_completo: e.target.value });
+                      setValidationErrors({ ...validationErrors, nome_completo: '' });
+                    }}
                     required
+                    className={validationErrors.nome_completo ? 'border-red-500' : ''}
                   />
+                  {validationErrors.nome_completo && (
+                    <p className="text-sm text-red-500">{validationErrors.nome_completo}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="bi">Bilhete de Identidade *</Label>

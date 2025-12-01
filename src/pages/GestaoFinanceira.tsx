@@ -42,7 +42,7 @@ import { Plus, TrendingUp, TrendingDown, DollarSign, Filter } from "lucide-react
 import { z } from "zod";
 
 const transacaoSchema = z.object({
-  tipo: z.enum(["entrada", "saida"], { required_error: "Tipo é obrigatório" }),
+  tipo: z.enum(["entrada", "saida"]),
   categoria: z.string().min(1, "Categoria é obrigatória"),
   valor: z.number().positive("Valor deve ser maior que zero"),
   descricao: z.string().min(5, "Descrição deve ter pelo menos 5 caracteres").max(200),
@@ -276,7 +276,7 @@ const GestaoFinanceira = () => {
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
-        error.errors.forEach((err) => {
+        error.issues.forEach((err) => {
           if (err.path[0]) {
             newErrors[err.path[0] as string] = err.message;
           }
