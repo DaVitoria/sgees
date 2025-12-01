@@ -20,6 +20,7 @@ import AtribuicaoDisciplinas from "./pages/pedagogico/AtribuicaoDisciplinas";
 import LancamentoNotas from "./pages/pedagogico/LancamentoNotas";
 import RelatoriosPedagogicos from "./pages/pedagogico/RelatoriosPedagogicos";
 import Aprovacoes from "./pages/pedagogico/Aprovacoes";
+import GestaoExames from "./pages/pedagogico/GestaoExames";
 import GestaoProfessores from "./pages/GestaoProfessores";
 import GestaoAlunos from "./pages/GestaoAlunos";
 import GestaoFinanceira from "./pages/GestaoFinanceira";
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/pedagogico/lancamento-notas" element={<LancamentoNotas />} />
             <Route path="/pedagogico/relatorios" element={<RelatoriosPedagogicos />} />
             <Route path="/pedagogico/aprovacoes" element={<Aprovacoes />} />
+            <Route path="/pedagogico/gestao-exames" element={<GestaoExames />} />
             <Route path="/aluno" element={<Aluno />} />
             <Route path="/professor" element={<Professor />} />
             <Route path="/administrativo/gestao-professores" element={<GestaoProfessores />} />

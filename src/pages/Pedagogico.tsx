@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Calendar, ClipboardCheck, BarChart3, FileCheck } from "lucide-react";
+import { BookOpen, Calendar, ClipboardCheck, BarChart3, FileCheck, GraduationCap } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const Pedagogico = () => {
@@ -60,6 +60,15 @@ const Pedagogico = () => {
       color: "text-primary",
       bgColor: "bg-primary/10",
       route: "/pedagogico/aprovacoes",
+      allowedRoles: ["admin", "professor"],
+    },
+    {
+      title: "Gestão de Exames",
+      description: "Gerir exames das classes 9ª, 10ª e 12ª",
+      icon: GraduationCap,
+      color: "text-red-500",
+      bgColor: "bg-red-500/10",
+      route: "/pedagogico/gestao-exames",
       allowedRoles: ["admin", "professor"],
     },
   ];

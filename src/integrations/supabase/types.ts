@@ -232,6 +232,92 @@ export type Database = {
           },
         ]
       }
+      exames: {
+        Row: {
+          aluno_id: string
+          ano_lectivo_id: string
+          classe: number
+          created_at: string | null
+          data_exame: string | null
+          disciplina_id: string
+          estado: string | null
+          id: string
+          lancado_em: string | null
+          lancado_por: string | null
+          local_exame: string | null
+          nota_exame: number | null
+          nota_final: number | null
+          numero_pauta: string | null
+          observacoes: string | null
+          tipo_exame: string
+        }
+        Insert: {
+          aluno_id: string
+          ano_lectivo_id: string
+          classe: number
+          created_at?: string | null
+          data_exame?: string | null
+          disciplina_id: string
+          estado?: string | null
+          id?: string
+          lancado_em?: string | null
+          lancado_por?: string | null
+          local_exame?: string | null
+          nota_exame?: number | null
+          nota_final?: number | null
+          numero_pauta?: string | null
+          observacoes?: string | null
+          tipo_exame: string
+        }
+        Update: {
+          aluno_id?: string
+          ano_lectivo_id?: string
+          classe?: number
+          created_at?: string | null
+          data_exame?: string | null
+          disciplina_id?: string
+          estado?: string | null
+          id?: string
+          lancado_em?: string | null
+          lancado_por?: string | null
+          local_exame?: string | null
+          nota_exame?: number | null
+          nota_final?: number | null
+          numero_pauta?: string | null
+          observacoes?: string | null
+          tipo_exame?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exames_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exames_ano_lectivo_id_fkey"
+            columns: ["ano_lectivo_id"]
+            isOneToOne: false
+            referencedRelation: "anos_lectivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exames_disciplina_id_fkey"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exames_lancado_por_fkey"
+            columns: ["lancado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financas: {
         Row: {
           aluno_id: string | null
