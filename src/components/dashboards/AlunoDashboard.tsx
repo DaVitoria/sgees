@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar, History, CheckCircle, XCircle, Clock, ArrowRight, Phone, Mail } from "lucide-react";
+import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar, History, CheckCircle, XCircle, Clock, ArrowRight, Phone, Mail, FileEdit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,7 @@ interface HistoricoAno {
 export const AlunoDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [aluno, setAluno] = useState<any>(null);
   const [notas, setNotas] = useState<any[]>([]);
   const [filteredNotas, setFilteredNotas] = useState<any[]>([]);
@@ -487,6 +489,10 @@ export const AlunoDashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button onClick={() => navigate('/auto-matricula')} variant="outline" className="gap-2">
+            <FileEdit className="h-4 w-4" />
+            Renovar Matrícula
+          </Button>
           <Badge variant="outline" className="text-sm">
             <Calendar className="h-3 w-3 mr-1" />
             {getSelectedAnoLectivoNome()}
