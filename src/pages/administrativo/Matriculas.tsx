@@ -218,6 +218,7 @@ const Matriculas = () => {
             activo
           )
         `)
+        .order("status", { ascending: false }) // Pendentes first
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -319,6 +320,7 @@ const Matriculas = () => {
         turma_id: formData.turma_id || null,
         data_matricula: formData.data_matricula,
         estado: formData.estado,
+        status: formData.turma_id ? "aprovada" : "pendente", // Approve if turma assigned
         observacoes: formData.observacoes || null,
       };
 
@@ -641,6 +643,7 @@ const Matriculas = () => {
                   <TableHead>Turma</TableHead>
                   <TableHead>Ano Lectivo</TableHead>
                   <TableHead>Data</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acções</TableHead>
                 </TableRow>
@@ -648,7 +651,7 @@ const Matriculas = () => {
               <TableBody>
                 {filteredMatriculas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       Nenhuma matrícula encontrada
                     </TableCell>
                   </TableRow>
@@ -678,12 +681,31 @@ const Matriculas = () => {
                         {format(new Date(matricula.data_matricula), "dd/MM/yyyy", { locale: pt })}
                       </TableCell>
                       <TableCell>
+                        <Badge className={
+                          (matricula as any).status === "pendente" ? "bg-yellow-100 text-yellow-800 border-yellow-200" :
+                          (matricula as any).status === "aprovada" ? "bg-green-100 text-green-800 border-green-200" :
+                          "bg-red-100 text-red-800 border-red-200"
+                        }>
+                          {(matricula as any).status === "pendente" ? "Pendente" :
+                           (matricula as any).status === "aprovada" ? "Aprovada" : "Rejeitada"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         <Badge className={estadoColors[matricula.estado || "activo"]}>
                           {estadoLabels[matricula.estado || "activo"]}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {(matricula as any).status === "pendente" && (
+                            <Button 
+                              variant="default" 
+                              size="sm"
+                              onClick={() => handleEdit(matricula)}
+                            >
+                              Aprovar
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" onClick={() => viewDetails(matricula)}>
                             <Eye className="h-4 w-4" />
                           </Button>

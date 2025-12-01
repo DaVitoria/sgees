@@ -13,6 +13,7 @@ import Aluno from "./pages/Aluno";
 import Professor from "./pages/Professor";
 import Perfil from "./pages/Perfil";
 import NotFound from "./pages/NotFound";
+import AutoMatricula from "./pages/AutoMatricula";
 import GestaoDeTurmas from "./pages/pedagogico/GestaoDeTurmas";
 import TurmaDetalhes from "./pages/pedagogico/TurmaDetalhes";
 import AtribuicaoDisciplinas from "./pages/pedagogico/AtribuicaoDisciplinas";
@@ -41,6 +42,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auto-matricula" element={<AutoMatricula />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/administrativo" element={<Administrativo />} />

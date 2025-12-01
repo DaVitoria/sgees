@@ -14,8 +14,11 @@ const Dashboard = () => {
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
+    } else if (!loading && user && !userRole) {
+      // Redirect users without role to auto-enrollment
+      navigate("/auto-matricula");
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, userRole, navigate]);
 
   if (loading) {
     return (

@@ -24,7 +24,7 @@ const Administrativo = () => {
       color: "text-red-500",
       bgColor: "bg-red-500/10",
       path: "/administrativo/gestao-utilizadores",
-      adminOnly: true,
+      allowedRoles: ["admin"],
     },
     {
       title: "Gestão de Professores",
@@ -33,6 +33,7 @@ const Administrativo = () => {
       color: "text-primary",
       bgColor: "bg-primary/10",
       path: "/administrativo/gestao-professores",
+      allowedRoles: ["admin", "funcionario", "secretario"],
     },
     {
       title: "Gestão de Alunos",
@@ -41,6 +42,7 @@ const Administrativo = () => {
       color: "text-accent",
       bgColor: "bg-accent/10",
       path: "/administrativo/gestao-alunos",
+      allowedRoles: ["admin", "funcionario", "secretario"],
     },
     {
       title: "Matrículas",
@@ -49,6 +51,7 @@ const Administrativo = () => {
       color: "text-secondary",
       bgColor: "bg-secondary/10",
       path: "/administrativo/matriculas",
+      allowedRoles: ["admin", "funcionario", "secretario"],
     },
     {
       title: "Gestão Financeira",
@@ -57,6 +60,7 @@ const Administrativo = () => {
       color: "text-success",
       bgColor: "bg-success/10",
       path: "/administrativo/gestao-financeira",
+      allowedRoles: ["admin", "tesoureiro", "funcionario"],
     },
     {
       title: "Inventário",
@@ -65,6 +69,7 @@ const Administrativo = () => {
       color: "text-warning",
       bgColor: "bg-warning/10",
       path: "/administrativo/inventario",
+      allowedRoles: ["admin", "funcionario"],
     },
     {
       title: "Documentos",
@@ -73,6 +78,7 @@ const Administrativo = () => {
       color: "text-primary",
       bgColor: "bg-primary/10",
       path: "/administrativo/documentos",
+      allowedRoles: ["admin", "secretario", "funcionario"],
     },
     {
       title: "Relatórios",
@@ -81,6 +87,7 @@ const Administrativo = () => {
       color: "text-accent",
       bgColor: "bg-accent/10",
       path: "/administrativo/relatorios",
+      allowedRoles: ["admin", "funcionario", "tesoureiro"],
     },
     {
       title: "Organograma",
@@ -89,11 +96,14 @@ const Administrativo = () => {
       color: "text-emerald-500",
       bgColor: "bg-emerald-500/10",
       path: "/administrativo/organograma",
+      allowedRoles: ["admin", "funcionario"],
     },
   ];
 
   // Filter modules based on user role
-  const visibleModules = modules.filter(m => !m.adminOnly || userRole === 'admin');
+  const visibleModules = modules.filter(m => 
+    !m.allowedRoles || m.allowedRoles.includes(userRole || "")
+  );
 
   if (loading) {
     return (
@@ -122,8 +132,9 @@ const Administrativo = () => {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {visibleModules.map((module) => {
             const Icon = module.icon;
+            const isRestricted = module.allowedRoles?.includes("admin") && module.allowedRoles.length === 1;
             return (
-              <Card key={module.title} className={`hover:shadow-lg transition-shadow ${module.adminOnly ? 'border-red-500/30' : ''}`}>
+              <Card key={module.title} className={`hover:shadow-lg transition-shadow ${isRestricted ? 'border-red-500/30' : ''}`}>
                 <CardHeader>
                   <div className={`w-12 h-12 rounded-lg ${module.bgColor} flex items-center justify-center mb-4`}>
                     <Icon className={`h-6 w-6 ${module.color}`} />
@@ -136,7 +147,7 @@ const Administrativo = () => {
                     className="w-full" 
                     onClick={() => module.path ? navigate(module.path) : null}
                     disabled={!module.path}
-                    variant={module.adminOnly ? "destructive" : "default"}
+                    variant={isRestricted ? "destructive" : "default"}
                   >
                     Aceder
                   </Button>

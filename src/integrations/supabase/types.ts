@@ -393,6 +393,7 @@ export type Database = {
           estado: string | null
           id: string
           observacoes: string | null
+          status: string | null
           turma_id: string | null
         }
         Insert: {
@@ -403,6 +404,7 @@ export type Database = {
           estado?: string | null
           id?: string
           observacoes?: string | null
+          status?: string | null
           turma_id?: string | null
         }
         Update: {
@@ -413,6 +415,7 @@ export type Database = {
           estado?: string | null
           id?: string
           observacoes?: string | null
+          status?: string | null
           turma_id?: string | null
         }
         Relationships: [
@@ -921,6 +924,7 @@ export type Database = {
         }
         Returns: number
       }
+      gerar_numero_matricula: { Args: never; Returns: string }
       get_financial_summary: { Args: never; Returns: Json }
       get_monthly_financial_evolution: { Args: never; Returns: Json }
       get_organizational_structure: { Args: never; Returns: Json }

@@ -22,6 +22,8 @@ interface Matricula {
   id: string;
   ano_lectivo_id: string;
   turma_id: string | null;
+  status: string;
+  estado: string;
   turmas: {
     id: string;
     nome: string;
@@ -111,6 +113,8 @@ export const AlunoDashboard = () => {
           id,
           ano_lectivo_id,
           turma_id,
+          status,
+          estado,
           turmas!matriculas_turma_id_fkey (id, nome, classe),
           anos_lectivos!matriculas_ano_lectivo_id_fkey (id, ano)
         `)
@@ -449,8 +453,32 @@ export const AlunoDashboard = () => {
   const mediaGeral = Number(calcularMediaGeral());
   const status = getStatusAprovacao(mediaAnual || mediaGeral);
 
+  // Get current matricula status
+  const currentMatricula = matriculas.find(m => m.anos_lectivos?.id === selectedAnoLectivo) || matriculas[0];
+  const matriculaStatus = currentMatricula?.status || "pendente";
+  const statusColors = {
+    pendente: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    aprovada: "bg-green-100 text-green-800 border-green-200",
+    rejeitada: "bg-red-100 text-red-800 border-red-200",
+  };
+
   return (
     <div className="space-y-6">
+      {/* Matrícula Status Alert */}
+      {matriculaStatus === "pendente" && (
+        <Card className="border-yellow-500/50 bg-yellow-50">
+          <CardContent className="flex items-center gap-3 py-4">
+            <Clock className="h-5 w-5 text-yellow-600" />
+            <div>
+              <p className="font-semibold text-yellow-900">Matrícula Pendente</p>
+              <p className="text-sm text-yellow-700">
+                Sua matrícula está aguardando aprovação da secretaria. Você será notificado quando for aprovada.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-2">Meu Dashboard</h1>

@@ -61,6 +61,14 @@ const AtribuicaoDisciplinas = () => {
   const fetchData = async () => {
     setLoadingData(true);
     try {
+      // Buscar apenas utilizadores com role 'professor'
+      const { data: professoresComRole } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "professor");
+
+      const professorUserIds = professoresComRole?.map(r => r.user_id) || [];
+
       const [atribuicoesRes, professoresRes, disciplinasRes, turmasRes, anosRes] = await Promise.all([
         supabase
           .from("professor_disciplinas")
@@ -72,7 +80,10 @@ const AtribuicaoDisciplinas = () => {
             anos_lectivos!ano_lectivo_id(ano)
           `)
           .order("created_at", { ascending: false }),
-        supabase.from("professores").select("id, user_id, profiles!user_id(nome_completo)"),
+        supabase
+          .from("professores")
+          .select("id, user_id, profiles!user_id(nome_completo)")
+          .in("user_id", professorUserIds.length > 0 ? professorUserIds : []),
         supabase.from("disciplinas").select("*").order("nome"),
         supabase.from("turmas").select("*").order("classe"),
         supabase.from("anos_lectivos").select("*").eq("activo", true),
