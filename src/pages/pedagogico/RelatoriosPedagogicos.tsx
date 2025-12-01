@@ -93,7 +93,7 @@ const RelatoriosPedagogicos = () => {
         .from("notas")
         .select(`
           *,
-          disciplina:disciplinas!notas_disciplina_id_fkey(nome)
+          disciplina:disciplinas!fk_notas_disciplina(nome)
         `)
         .in("aluno_id", alunoIds);
 

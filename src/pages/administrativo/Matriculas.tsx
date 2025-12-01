@@ -201,7 +201,7 @@ const Matriculas = () => {
             numero_matricula,
             encarregado_nome,
             encarregado_telefone,
-            profiles:user_id(
+            profiles!fk_alunos_user(
               nome_completo,
               email,
               telefone

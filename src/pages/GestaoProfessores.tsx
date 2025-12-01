@@ -98,7 +98,7 @@ const GestaoProfessores = () => {
         .from("professores")
         .select(`
           *,
-          profiles!user_id(
+          profiles!fk_professores_user_id(
             nome_completo,
             email,
             telefone,

@@ -150,7 +150,7 @@ const GestaoAlunos = () => {
         .from("alunos")
         .select(`
           *,
-          profiles!user_id(
+          profiles!fk_alunos_user(
             id,
             nome_completo,
             email,
@@ -159,7 +159,7 @@ const GestaoAlunos = () => {
             data_nascimento,
             endereco
           ),
-          turmas!turma_id(
+          turmas!fk_alunos_turma(
             nome,
             classe
           )
@@ -213,7 +213,7 @@ const GestaoAlunos = () => {
             nome,
             codigo
           ),
-          anos_lectivos!ano_lectivo_id(
+          anos_lectivos!fk_notas_ano_lectivo(
             ano
           )
         `)

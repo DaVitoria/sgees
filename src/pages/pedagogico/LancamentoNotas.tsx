@@ -79,13 +79,13 @@ const LancamentoNotas = () => {
           .from("notas")
           .select(`
             *,
-            alunos!aluno_id(id, numero_matricula, profiles!user_id(nome_completo)),
-            disciplinas!disciplina_id(nome, codigo),
-            anos_lectivos!ano_lectivo_id(ano)
+            alunos!fk_notas_aluno(id, numero_matricula, profiles!fk_alunos_user(nome_completo)),
+            disciplinas!fk_notas_disciplina(nome, codigo),
+            anos_lectivos!fk_notas_ano_lectivo(ano)
           `)
           .eq("trimestre", selectedTrimestre)
           .order("created_at", { ascending: false }),
-        supabase.from("alunos").select("id, numero_matricula, user_id, profiles!user_id(nome_completo)"),
+        supabase.from("alunos").select("id, numero_matricula, user_id, profiles!fk_alunos_user(nome_completo)"),
         supabase.from("disciplinas").select("*").order("nome"),
         supabase.from("anos_lectivos").select("*").eq("activo", true),
       ]);

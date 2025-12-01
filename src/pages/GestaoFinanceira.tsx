@@ -153,9 +153,9 @@ const GestaoFinanceira = () => {
           comprovante,
           registado_por,
           aluno_id,
-          alunos!financas_aluno_id_fkey (
+          alunos!fk_financas_aluno_id (
             numero_matricula,
-            profiles:user_id (
+            profiles!fk_alunos_user (
               nome_completo
             )
           )

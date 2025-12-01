@@ -85,8 +85,8 @@ export const AlunoDashboard = () => {
         .from("alunos")
         .select(`
           *,
-          profiles!user_id(nome_completo),
-          turmas!turma_id(id, nome, classe)
+          profiles!fk_alunos_user(nome_completo),
+          turmas!fk_alunos_turma(id, nome, classe)
         `)
         .eq("user_id", user?.id)
         .maybeSingle();
@@ -115,8 +115,8 @@ export const AlunoDashboard = () => {
           turma_id,
           status,
           estado,
-          turmas!matriculas_turma_id_fkey (id, nome, classe),
-          anos_lectivos!matriculas_ano_lectivo_id_fkey (id, ano)
+          turmas!fk_matriculas_turma_id (id, nome, classe),
+          anos_lectivos!fk_matriculas_ano_lectivo_id (id, ano)
         `)
         .eq("aluno_id", alunoData.id)
         .order("created_at", { ascending: false });
@@ -138,8 +138,8 @@ export const AlunoDashboard = () => {
         .from("notas")
         .select(`
           *,
-          disciplinas!disciplina_id(nome, codigo),
-          anos_lectivos!ano_lectivo_id(id, ano)
+          disciplinas!fk_notas_disciplina(nome, codigo),
+          anos_lectivos!fk_notas_ano_lectivo(id, ano)
         `)
         .eq("aluno_id", alunoData.id)
         .order("trimestre");

@@ -61,7 +61,7 @@ const GestaoDeTurmas = () => {
     setLoadingData(true);
     try {
       const [turmasRes, anosRes] = await Promise.all([
-        supabase.from("turmas").select("*, anos_lectivos!ano_lectivo_id(ano), alunos!turma_id(id)").order("classe", { ascending: true }),
+        supabase.from("turmas").select("*, anos_lectivos!fk_turmas_ano_lectivo_id(ano), alunos!fk_alunos_turma(id)").order("classe", { ascending: true }),
         supabase.from("anos_lectivos").select("*").eq("activo", true),
       ]);
 

@@ -49,11 +49,11 @@ const TurmaDetalhes = () => {
     setLoadingData(true);
     try {
       const [turmaRes, alunosRes, alunosDispRes, profDiscRes, profsRes, discsRes] = await Promise.all([
-        supabase.from("turmas").select("*, anos_lectivos!ano_lectivo_id(ano)").eq("id", id).single(),
-        supabase.from("alunos").select("*, profiles!user_id(nome_completo)").eq("turma_id", id),
-        supabase.from("alunos").select("*, profiles!user_id(nome_completo)").is("turma_id", null).eq("estado", "activo"),
-        supabase.from("professor_disciplinas").select("*, professores!professor_id(*, profiles!user_id(nome_completo)), disciplinas!disciplina_id(nome)").eq("turma_id", id),
-        supabase.from("professores").select("*, profiles!user_id(nome_completo)"),
+        supabase.from("turmas").select("*, anos_lectivos!fk_turmas_ano_lectivo_id(ano)").eq("id", id).single(),
+        supabase.from("alunos").select("*, profiles!fk_alunos_user(nome_completo)").eq("turma_id", id),
+        supabase.from("alunos").select("*, profiles!fk_alunos_user(nome_completo)").is("turma_id", null).eq("estado", "activo"),
+        supabase.from("professor_disciplinas").select("*, professores!fk_professor_disciplinas_professor(*, profiles!fk_professores_user_id(nome_completo)), disciplinas!fk_professor_disciplinas_disciplina(nome)").eq("turma_id", id),
+        supabase.from("professores").select("*, profiles!fk_professores_user_id(nome_completo)"),
         supabase.from("disciplinas").select("*"),
       ]);
 
