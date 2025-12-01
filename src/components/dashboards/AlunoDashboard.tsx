@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar, History, CheckCircle, XCircle, Clock, ArrowRight, Phone, Mail, FileEdit } from "lucide-react";
+import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar, History, CheckCircle, XCircle, Clock, ArrowRight, Phone, Mail, FileEdit, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -494,6 +494,29 @@ export const AlunoDashboard = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Acompanhamento Matrícula Card */}
+      <Card className="bg-primary/5 border-primary/20">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <ClipboardList className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Status da Matrícula</h3>
+                <p className="text-sm text-muted-foreground">
+                  Acompanhe o progresso da sua candidatura
+                </p>
+              </div>
+            </div>
+            <Button onClick={() => navigate('/acompanhamento-matricula')} className="gap-2">
+              Ver Progresso
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>

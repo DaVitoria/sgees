@@ -30,6 +30,7 @@ import Documentos from "./pages/administrativo/Documentos";
 import RelatoriosAdmin from "./pages/administrativo/Relatorios";
 import GestaoUtilizadores from "./pages/administrativo/GestaoUtilizadores";
 import Organograma from "./pages/administrativo/Organograma";
+import AcompanhamentoMatricula from "./pages/AcompanhamentoMatricula";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/auto-matricula" element={<AutoMatricula />} />
+            <Route path="/acompanhamento-matricula" element={<AcompanhamentoMatricula />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/administrativo" element={<Administrativo />} />
