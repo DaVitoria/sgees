@@ -764,14 +764,14 @@ const Matriculas = () => {
                 <div className="space-y-2">
                   <Label htmlFor="turma_id">Turma</Label>
                   <Select
-                    value={formData.turma_id}
-                    onValueChange={(value) => setFormData({ ...formData, turma_id: value })}
+                    value={formData.turma_id || "none"}
+                    onValueChange={(value) => setFormData({ ...formData, turma_id: value === "none" ? "" : value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccione a turma" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Não atribuída</SelectItem>
+                      <SelectItem value="none">Não atribuída</SelectItem>
                       {filteredTurmas.map((turma) => (
                         <SelectItem key={turma.id} value={turma.id}>
                           {turma.classe}ª Classe - {turma.nome}
