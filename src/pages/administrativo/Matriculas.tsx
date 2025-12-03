@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -43,7 +44,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Search, ArrowLeft, UserCheck, UserX, RefreshCw, Eye, FileText, Users } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, ArrowLeft, UserCheck, UserX, RefreshCw, Eye, FileText, Users, CheckCircle, XCircle, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
@@ -54,6 +55,7 @@ interface Matricula {
   turma_id: string | null;
   data_matricula: string;
   estado: string;
+  status: string;
   observacoes: string | null;
   created_at: string;
   alunos: {
@@ -135,9 +137,16 @@ const Matriculas = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [editingMatricula, setEditingMatricula] = useState<Matricula | null>(null);
   const [selectedMatricula, setSelectedMatricula] = useState<Matricula | null>(null);
   const [deletingMatriculaId, setDeletingMatriculaId] = useState<string | null>(null);
+  
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<"aprovar" | "rejeitar" | "turma">("aprovar");
+  const [bulkTurmaId, setBulkTurmaId] = useState("");
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
   
   const [formData, setFormData] = useState({
     aluno_id: "",
@@ -156,6 +165,7 @@ const Matriculas = () => {
     activos: 0,
     transferidos: 0,
     cancelados: 0,
+    pendentes: 0,
   });
 
   useEffect(() => {
@@ -176,7 +186,8 @@ const Matriculas = () => {
     const activos = matriculas.filter(m => m.estado === "activo").length;
     const transferidos = matriculas.filter(m => m.estado === "transferido").length;
     const cancelados = matriculas.filter(m => m.estado === "cancelado").length;
-    setStats({ total, activos, transferidos, cancelados });
+    const pendentes = matriculas.filter(m => m.status === "pendente").length;
+    setStats({ total, activos, transferidos, cancelados, pendentes });
   }, [matriculas]);
 
   const fetchData = async () => {
@@ -462,10 +473,122 @@ const Matriculas = () => {
     setIsDetailsOpen(true);
   };
 
+  // Bulk selection handlers
+  const pendingMatriculas = matriculas.filter(m => m.status === "pendente");
+  
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(new Set(pendingMatriculas.map(m => m.id)));
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSet = new Set(selectedIds);
+    if (checked) {
+      newSet.add(id);
+    } else {
+      newSet.delete(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedIds.size === 0) return;
+    setIsBulkProcessing(true);
+
+    try {
+      const updates = Array.from(selectedIds).map(async (id) => {
+        const matricula = matriculas.find(m => m.id === id);
+        const updateData: any = { status: "aprovada", estado: "activo" };
+        
+        if (bulkAction === "turma" && bulkTurmaId) {
+          updateData.turma_id = bulkTurmaId;
+          // Update aluno turma_id as well
+          if (matricula?.aluno_id) {
+            await supabase
+              .from("alunos")
+              .update({ turma_id: bulkTurmaId })
+              .eq("id", matricula.aluno_id);
+          }
+        }
+        
+        return supabase
+          .from("matriculas")
+          .update(updateData)
+          .eq("id", id);
+      });
+
+      await Promise.all(updates);
+
+      toast({
+        title: "Matrículas aprovadas",
+        description: `${selectedIds.size} matrícula(s) aprovada(s) com sucesso.`,
+      });
+
+      setSelectedIds(new Set());
+      setIsBulkDialogOpen(false);
+      setBulkTurmaId("");
+      fetchMatriculas();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao aprovar matrículas",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkReject = async () => {
+    if (selectedIds.size === 0) return;
+    setIsBulkProcessing(true);
+
+    try {
+      const { error } = await supabase
+        .from("matriculas")
+        .update({ status: "rejeitada", estado: "cancelado" })
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({
+        title: "Matrículas rejeitadas",
+        description: `${selectedIds.size} matrícula(s) rejeitada(s).`,
+      });
+
+      setSelectedIds(new Set());
+      setIsBulkDialogOpen(false);
+      fetchMatriculas();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao rejeitar matrículas",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const executeBulkAction = async () => {
+    if (bulkAction === "aprovar" || bulkAction === "turma") {
+      await handleBulkApprove();
+    } else if (bulkAction === "rejeitar") {
+      await handleBulkReject();
+    }
+  };
+
   // Filter turmas by selected ano_lectivo
   const filteredTurmas = turmas.filter(t => 
     !formData.ano_lectivo_id || t.ano_lectivo_id === formData.ano_lectivo_id
   );
+
+  // Get turmas for bulk assignment (use active year)
+  const activeYear = anosLectivos.find(a => a.activo);
+  const bulkTurmas = turmas.filter(t => activeYear && t.ano_lectivo_id === activeYear.id);
 
   // Get unique classes for filter
   const uniqueClasses = [...new Set(turmas.map(t => t.classe))].sort((a, b) => a - b);
@@ -493,7 +616,7 @@ const Matriculas = () => {
     );
   }
 
-  if (!user || (userRole !== "admin" && userRole !== "secretario")) {
+  if (!user || (userRole !== "admin" && userRole !== "secretario" && userRole !== "funcionario")) {
     navigate("/dashboard");
     return null;
   }
@@ -519,7 +642,7 @@ const Matriculas = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -529,6 +652,19 @@ const Matriculas = () => {
                 <div>
                   <p className="text-2xl font-bold">{stats.total}</p>
                   <p className="text-sm text-muted-foreground">Total</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-yellow-100">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.pendentes}</p>
+                  <p className="text-sm text-muted-foreground">Pendentes</p>
                 </div>
               </div>
             </CardContent>
@@ -573,6 +709,115 @@ const Matriculas = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Pending Enrollments Section */}
+        {pendingMatriculas.length > 0 && (
+          <Card className="border-yellow-200 bg-yellow-50/50">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-yellow-600" />
+                  <CardTitle className="text-lg">Matrículas Pendentes ({pendingMatriculas.length})</CardTitle>
+                </div>
+                {selectedIds.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {selectedIds.size} selecionada(s)
+                    </span>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setBulkAction("aprovar");
+                        setIsBulkDialogOpen(true);
+                      }}
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Aprovar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setBulkAction("turma");
+                        setIsBulkDialogOpen(true);
+                      }}
+                    >
+                      <Users className="mr-2 h-4 w-4" />
+                      Atribuir Turma
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => {
+                        setBulkAction("rejeitar");
+                        setIsBulkDialogOpen(true);
+                      }}
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Rejeitar
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <CardDescription>Revise e aprove as matrículas pendentes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={pendingMatriculas.length > 0 && selectedIds.size === pendingMatriculas.length}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
+                    <TableHead>Aluno</TableHead>
+                    <TableHead>Nº Matrícula</TableHead>
+                    <TableHead>Encarregado</TableHead>
+                    <TableHead>Contacto</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead className="text-right">Acções</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingMatriculas.map((matricula) => (
+                    <TableRow key={matricula.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(matricula.id)}
+                          onCheckedChange={(checked) => handleSelectOne(matricula.id, checked as boolean)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-medium">{matricula.alunos?.profiles?.nome_completo || "N/A"}</p>
+                      </TableCell>
+                      <TableCell className="font-mono">{matricula.alunos?.numero_matricula}</TableCell>
+                      <TableCell>{matricula.alunos?.encarregado_nome}</TableCell>
+                      <TableCell>{matricula.alunos?.encarregado_telefone}</TableCell>
+                      <TableCell>
+                        {format(new Date(matricula.data_matricula), "dd/MM/yyyy", { locale: pt })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => handleEdit(matricula)}
+                          >
+                            Aprovar e Atribuir
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => viewDetails(matricula)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Filters */}
         <Card>
@@ -976,6 +1221,82 @@ const Matriculas = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Bulk Action Dialog */}
+        <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {bulkAction === "aprovar" && "Aprovar Matrículas em Massa"}
+                {bulkAction === "rejeitar" && "Rejeitar Matrículas em Massa"}
+                {bulkAction === "turma" && "Atribuir Turma em Massa"}
+              </DialogTitle>
+              <DialogDescription>
+                {bulkAction === "aprovar" && `Aprovar ${selectedIds.size} matrícula(s) seleccionada(s)`}
+                {bulkAction === "rejeitar" && `Rejeitar ${selectedIds.size} matrícula(s) seleccionada(s)`}
+                {bulkAction === "turma" && `Atribuir turma a ${selectedIds.size} matrícula(s) seleccionada(s)`}
+              </DialogDescription>
+            </DialogHeader>
+            
+            {bulkAction === "turma" && (
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Seleccione a Turma</Label>
+                  <Select value={bulkTurmaId} onValueChange={setBulkTurmaId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione a turma" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bulkTurmas.map((turma) => (
+                        <SelectItem key={turma.id} value={turma.id}>
+                          {turma.classe}ª Classe - {turma.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {bulkAction === "rejeitar" && (
+              <div className="py-4">
+                <p className="text-sm text-muted-foreground">
+                  As matrículas rejeitadas serão marcadas como canceladas. Os alunos serão notificados.
+                </p>
+              </div>
+            )}
+
+            {bulkAction === "aprovar" && (
+              <div className="py-4">
+                <p className="text-sm text-muted-foreground">
+                  As matrículas serão aprovadas e marcadas como activas. Pode atribuir turmas individualmente depois.
+                </p>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsBulkDialogOpen(false);
+                  setBulkTurmaId("");
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={executeBulkAction}
+                disabled={isBulkProcessing || (bulkAction === "turma" && !bulkTurmaId)}
+                variant={bulkAction === "rejeitar" ? "destructive" : "default"}
+              >
+                {isBulkProcessing ? "A processar..." : 
+                  bulkAction === "aprovar" ? "Aprovar Todas" :
+                  bulkAction === "rejeitar" ? "Rejeitar Todas" :
+                  "Atribuir Turma"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
