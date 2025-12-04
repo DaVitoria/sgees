@@ -12,8 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Search, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 
 const atribuicaoSchema = z.object({
   professor_id: z.string().min(1, "Selecione um professor"),
@@ -35,6 +36,11 @@ const AtribuicaoDisciplinas = () => {
   const [anosLectivos, setAnosLectivos] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  
+  // Filtros
+  const [filtroProf, setFiltroProf] = useState("");
+  const [filtroDisc, setFiltroDisc] = useState("");
+  const [filtroTurma, setFiltroTurma] = useState("");
 
   const form = useForm<AtribuicaoFormData>({
     resolver: zodResolver(atribuicaoSchema),
@@ -154,6 +160,25 @@ const AtribuicaoDisciplinas = () => {
         variant: "destructive",
       });
     }
+  };
+
+  // Filtrar atribuições
+  const atribuicoesFiltradas = atribuicoes.filter((atrib) => {
+    const profNome = atrib.professores?.profiles?.nome_completo?.toLowerCase() || "";
+    const discNome = atrib.disciplinas?.nome?.toLowerCase() || "";
+    const turmaNome = atrib.turmas?.nome?.toLowerCase() || "";
+    
+    const matchProf = !filtroProf || profNome.includes(filtroProf.toLowerCase());
+    const matchDisc = !filtroDisc || discNome.includes(filtroDisc.toLowerCase());
+    const matchTurma = !filtroTurma || turmaNome.includes(filtroTurma.toLowerCase());
+    
+    return matchProf && matchDisc && matchTurma;
+  });
+
+  const limparFiltros = () => {
+    setFiltroProf("");
+    setFiltroDisc("");
+    setFiltroTurma("");
   };
 
   if (loading || loadingData) {
@@ -305,7 +330,53 @@ const AtribuicaoDisciplinas = () => {
             <CardTitle>Atribuições Registadas</CardTitle>
             <CardDescription>Lista de todas as atribuições</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Filtros */}
+            <div className="flex flex-wrap gap-3 items-end">
+              <div className="flex-1 min-w-[180px]">
+                <label className="text-sm font-medium mb-1 block">Professor</label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Filtrar professor..."
+                    value={filtroProf}
+                    onChange={(e) => setFiltroProf(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+              </div>
+              <div className="flex-1 min-w-[180px]">
+                <label className="text-sm font-medium mb-1 block">Disciplina</label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Filtrar disciplina..."
+                    value={filtroDisc}
+                    onChange={(e) => setFiltroDisc(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+              </div>
+              <div className="flex-1 min-w-[180px]">
+                <label className="text-sm font-medium mb-1 block">Turma</label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Filtrar turma..."
+                    value={filtroTurma}
+                    onChange={(e) => setFiltroTurma(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+              </div>
+              {(filtroProf || filtroDisc || filtroTurma) && (
+                <Button variant="ghost" size="sm" onClick={limparFiltros}>
+                  <X className="h-4 w-4 mr-1" />
+                  Limpar
+                </Button>
+              )}
+            </div>
+
             <Table>
               <TableHeader>
                 <TableRow>
@@ -317,14 +388,16 @@ const AtribuicaoDisciplinas = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {atribuicoes.length === 0 ? (
+                {atribuicoesFiltradas.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      Nenhuma atribuição registada
+                      {atribuicoes.length === 0 
+                        ? "Nenhuma atribuição registada" 
+                        : "Nenhuma atribuição encontrada com os filtros aplicados"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  atribuicoes.map((atrib) => (
+                  atribuicoesFiltradas.map((atrib) => (
                     <TableRow key={atrib.id}>
                       <TableCell className="font-medium">
                         {atrib.professores?.profiles?.nome_completo || "N/A"}
