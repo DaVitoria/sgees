@@ -209,7 +209,7 @@ const AtribuicaoDisciplinas = () => {
                           </FormControl>
                           <SelectContent>
                             {professores.map((prof) => (
-                              <SelectItem key={prof.id} value={prof.id}>
+                              <SelectItem key={`prof-${prof.id}`} value={prof.id}>
                                 {prof.profiles?.nome_completo || "Sem nome"}
                               </SelectItem>
                             ))}
@@ -233,7 +233,7 @@ const AtribuicaoDisciplinas = () => {
                           </FormControl>
                           <SelectContent>
                             {disciplinas.map((disc) => (
-                              <SelectItem key={disc.id} value={disc.id}>
+                              <SelectItem key={`disc-${disc.id}`} value={disc.id}>
                                 {disc.nome} ({disc.codigo})
                               </SelectItem>
                             ))}
@@ -257,7 +257,7 @@ const AtribuicaoDisciplinas = () => {
                           </FormControl>
                           <SelectContent>
                             {turmas.map((turma) => (
-                              <SelectItem key={turma.id} value={turma.id}>
+                              <SelectItem key={`turma-${turma.id}`} value={turma.id}>
                                 {turma.nome} ({turma.classe}ª)
                               </SelectItem>
                             ))}
@@ -281,7 +281,7 @@ const AtribuicaoDisciplinas = () => {
                           </FormControl>
                           <SelectContent>
                             {anosLectivos.map((ano) => (
-                              <SelectItem key={ano.id} value={ano.id}>
+                              <SelectItem key={`ano-${ano.id}`} value={ano.id}>
                                 {ano.ano}
                               </SelectItem>
                             ))}
