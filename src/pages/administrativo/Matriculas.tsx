@@ -44,9 +44,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Search, ArrowLeft, UserCheck, UserX, RefreshCw, Eye, FileText, Users, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Pencil, Trash2, Plus, Search, ArrowLeft, UserCheck, UserX, RefreshCw, Eye, FileText, Users, CheckCircle, XCircle, Clock, AlertCircle, Info, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { z } from "zod";
+
+// Schema de validação
+const matriculaFormSchema = z.object({
+  aluno_id: z.string().min(1, "Seleccione um aluno"),
+  ano_lectivo_id: z.string().min(1, "Seleccione o ano lectivo"),
+  turma_id: z.string().optional(),
+  data_matricula: z.string().min(1, "Data de matrícula é obrigatória"),
+  estado: z.string().min(1, "Seleccione um estado"),
+  observacoes: z.string().max(500, "Observações devem ter no máximo 500 caracteres").optional(),
+});
 
 interface Matricula {
   id: string;
@@ -156,8 +167,10 @@ const Matriculas = () => {
     estado: "activo",
     observacoes: "",
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
   // Stats
   const [stats, setStats] = useState({
@@ -305,10 +318,27 @@ const Matriculas = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setValidationErrors({});
 
     try {
-      if (!formData.aluno_id || !formData.ano_lectivo_id) {
-        throw new Error("Selecione o aluno e o ano lectivo");
+      // Validar com zod
+      const validationResult = matriculaFormSchema.safeParse(formData);
+      
+      if (!validationResult.success) {
+        const errors: Record<string, string> = {};
+        validationResult.error.issues.forEach((issue) => {
+          if (issue.path[0]) {
+            errors[issue.path[0] as string] = issue.message;
+          }
+        });
+        setValidationErrors(errors);
+        toast({
+          title: "Erro de validação",
+          description: "Por favor, corrija os campos destacados.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
 
       // Check if student already has enrollment for this year
@@ -318,10 +348,17 @@ const Matriculas = () => {
           .select("id")
           .eq("aluno_id", formData.aluno_id)
           .eq("ano_lectivo_id", formData.ano_lectivo_id)
-          .single();
+          .maybeSingle();
 
         if (existing) {
-          throw new Error("Este aluno já possui matrícula para o ano lectivo seleccionado");
+          setValidationErrors({ aluno_id: "Este aluno já possui matrícula para o ano lectivo seleccionado" });
+          toast({
+            title: "Matrícula duplicada",
+            description: "Este aluno já possui matrícula para o ano lectivo seleccionado.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
         }
       }
 
@@ -331,7 +368,7 @@ const Matriculas = () => {
         turma_id: formData.turma_id || null,
         data_matricula: formData.data_matricula,
         estado: formData.estado,
-        status: formData.turma_id ? "aprovada" : "pendente", // Approve if turma assigned
+        status: formData.turma_id ? "aprovada" : "pendente",
         observacoes: formData.observacoes || null,
       };
 
@@ -343,11 +380,11 @@ const Matriculas = () => {
 
         if (error) throw error;
 
-        // Update aluno turma_id if turma changed
+        // Update aluno turma_id and estado if turma changed
         if (formData.turma_id) {
           await supabase
             .from("alunos")
-            .update({ turma_id: formData.turma_id })
+            .update({ turma_id: formData.turma_id, estado: "activo" })
             .eq("id", formData.aluno_id);
         }
 
@@ -360,13 +397,25 @@ const Matriculas = () => {
           .from("matriculas")
           .insert(matriculaData);
 
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505' || error.message.includes('duplicate')) {
+            setValidationErrors({ aluno_id: "Matrícula já existe para este aluno/ano" });
+            toast({
+              title: "Matrícula duplicada",
+              description: "Já existe uma matrícula para este aluno e ano lectivo.",
+              variant: "destructive",
+            });
+            setIsSubmitting(false);
+            return;
+          }
+          throw error;
+        }
 
         // Update aluno turma_id
         if (formData.turma_id) {
           await supabase
             .from("alunos")
-            .update({ turma_id: formData.turma_id })
+            .update({ turma_id: formData.turma_id, estado: "activo" })
             .eq("id", formData.aluno_id);
         }
 
@@ -457,6 +506,7 @@ const Matriculas = () => {
 
   const resetForm = () => {
     setEditingMatricula(null);
+    setValidationErrors({});
     const activeYear = anosLectivos.find(a => a.activo);
     setFormData({
       aluno_id: "",
@@ -978,24 +1028,59 @@ const Matriculas = () => {
         </Card>
 
         {/* Create/Edit Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{editingMatricula ? "Editar Matrícula" : "Nova Matrícula"}</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                {editingMatricula ? (
+                  <>
+                    <Pencil className="h-5 w-5 text-primary" />
+                    {editingMatricula.status === "pendente" ? "Aprovar e Editar Matrícula" : "Editar Matrícula"}
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-5 w-5 text-primary" />
+                    Nova Matrícula
+                  </>
+                )}
+              </DialogTitle>
               <DialogDescription>
-                {editingMatricula ? "Actualize os dados da matrícula" : "Registar uma nova matrícula para o aluno"}
+                {editingMatricula 
+                  ? editingMatricula.status === "pendente"
+                    ? "Revise os dados do aluno, atribua uma turma para aprovar a matrícula."
+                    : "Actualize os dados da matrícula"
+                  : "Registar uma nova matrícula para o aluno"}
               </DialogDescription>
             </DialogHeader>
+            
+            {/* Aviso de aprovação pendente */}
+            {editingMatricula && editingMatricula.status === "pendente" && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-yellow-800">Matrícula Pendente de Aprovação</p>
+                  <p className="text-sm text-yellow-700">
+                    Atribua uma turma para aprovar automaticamente esta matrícula. O aluno será notificado.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="aluno_id">Aluno *</Label>
+                  <Label htmlFor="aluno_id" className="flex items-center gap-1">
+                    Aluno <span className="text-destructive">*</span>
+                  </Label>
                   <Select
                     value={formData.aluno_id}
-                    onValueChange={(value) => setFormData({ ...formData, aluno_id: value })}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, aluno_id: value });
+                      setValidationErrors({ ...validationErrors, aluno_id: "" });
+                    }}
                     disabled={!!editingMatricula}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={validationErrors.aluno_id ? "border-destructive ring-destructive" : ""}>
                       <SelectValue placeholder="Seleccione o aluno" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1006,16 +1091,27 @@ const Matriculas = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {validationErrors.aluno_id && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.aluno_id}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="ano_lectivo_id">Ano Lectivo *</Label>
+                  <Label htmlFor="ano_lectivo_id" className="flex items-center gap-1">
+                    Ano Lectivo <span className="text-destructive">*</span>
+                  </Label>
                   <Select
                     value={formData.ano_lectivo_id}
-                    onValueChange={(value) => setFormData({ ...formData, ano_lectivo_id: value, turma_id: "" })}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, ano_lectivo_id: value, turma_id: "" });
+                      setValidationErrors({ ...validationErrors, ano_lectivo_id: "" });
+                    }}
                     disabled={!!editingMatricula}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={validationErrors.ano_lectivo_id ? "border-destructive ring-destructive" : ""}>
                       <SelectValue placeholder="Seleccione o ano lectivo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1026,15 +1122,28 @@ const Matriculas = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {validationErrors.ano_lectivo_id && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.ano_lectivo_id}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="turma_id">Turma</Label>
+                  <Label htmlFor="turma_id" className="flex items-center gap-1">
+                    Turma
+                    {editingMatricula?.status === "pendente" && (
+                      <Badge variant="outline" className="ml-2 text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                        Obrigatório para aprovar
+                      </Badge>
+                    )}
+                  </Label>
                   <Select
                     value={formData.turma_id || "none"}
                     onValueChange={(value) => setFormData({ ...formData, turma_id: value === "none" ? "" : value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={editingMatricula?.status === "pendente" && !formData.turma_id ? "border-yellow-400" : ""}>
                       <SelectValue placeholder="Seleccione a turma" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1046,17 +1155,35 @@ const Matriculas = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {filteredTurmas.length === 0 && formData.ano_lectivo_id && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Info className="h-3 w-3" />
+                      Nenhuma turma disponível para este ano lectivo.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="data_matricula">Data da Matrícula *</Label>
+                  <Label htmlFor="data_matricula" className="flex items-center gap-1">
+                    Data da Matrícula <span className="text-destructive">*</span>
+                  </Label>
                   <Input
                     id="data_matricula"
                     type="date"
                     value={formData.data_matricula}
-                    onChange={(e) => setFormData({ ...formData, data_matricula: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, data_matricula: e.target.value });
+                      setValidationErrors({ ...validationErrors, data_matricula: "" });
+                    }}
+                    className={validationErrors.data_matricula ? "border-destructive ring-destructive" : ""}
                     required
                   />
+                  {validationErrors.data_matricula && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {validationErrors.data_matricula}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -1069,33 +1196,101 @@ const Matriculas = () => {
                       <SelectValue placeholder="Seleccione o estado" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="activo">Activo</SelectItem>
-                      <SelectItem value="pendente">Pendente</SelectItem>
-                      <SelectItem value="transferido">Transferido</SelectItem>
-                      <SelectItem value="cancelado">Cancelado</SelectItem>
-                      <SelectItem value="concluido">Concluído</SelectItem>
+                      <SelectItem value="activo">
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-green-500" />
+                          Activo
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="pendente">
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-yellow-500" />
+                          Pendente
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="transferido">
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-blue-500" />
+                          Transferido
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="cancelado">
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-red-500" />
+                          Cancelado
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="concluido">
+                        <span className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-purple-500" />
+                          Concluído
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="observacoes">Observações</Label>
+                <Label htmlFor="observacoes" className="flex items-center justify-between">
+                  Observações
+                  <span className="text-xs text-muted-foreground">
+                    {formData.observacoes?.length || 0}/500
+                  </span>
+                </Label>
                 <Textarea
                   id="observacoes"
                   value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 500) {
+                      setFormData({ ...formData, observacoes: e.target.value });
+                      setValidationErrors({ ...validationErrors, observacoes: "" });
+                    }
+                  }}
                   placeholder="Observações adicionais sobre a matrícula..."
                   rows={3}
+                  className={validationErrors.observacoes ? "border-destructive ring-destructive" : ""}
                 />
+                {validationErrors.observacoes && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {validationErrors.observacoes}
+                  </p>
+                )}
               </div>
 
-              <DialogFooter>
+              {/* Info sobre aprovação automática */}
+              {formData.turma_id && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <p className="text-sm text-green-700">
+                    A matrícula será marcada como <strong>aprovada</strong> e o aluno será atribuído à turma seleccionada.
+                  </p>
+                </div>
+              )}
+
+              <DialogFooter className="gap-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "A guardar..." : editingMatricula ? "Actualizar" : "Registar"}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      A guardar...
+                    </>
+                  ) : editingMatricula ? (
+                    editingMatricula.status === "pendente" && formData.turma_id ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Aprovar e Guardar
+                      </>
+                    ) : (
+                      "Actualizar"
+                    )
+                  ) : (
+                    "Registar"
+                  )}
                 </Button>
               </DialogFooter>
             </form>
