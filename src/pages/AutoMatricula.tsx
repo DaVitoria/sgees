@@ -78,19 +78,24 @@ const AutoMatricula = () => {
 
   const checkExistingEnrollment = async () => {
     try {
+      // Verificar se já existe um registo de aluno para este utilizador
       const { data: alunoData } = await supabase
         .from("alunos")
         .select("id, estado")
         .eq("user_id", user?.id)
         .maybeSingle();
 
-      if (alunoData && alunoData.estado === 'activo') {
+      if (alunoData) {
+        // Já existe um registo de aluno - redirecionar independentemente do estado
         setHasExistingEnrollment(true);
         toast({
           title: "Matrícula já existe",
-          description: "Você já possui uma matrícula activa registrada.",
+          description: alunoData.estado === 'activo' 
+            ? "Você já possui uma matrícula activa registrada."
+            : "Você já possui uma matrícula em processamento. Aguarde a aprovação.",
         });
         navigate("/aluno");
+        return;
       }
     } catch (error) {
       console.error("Error checking enrollment:", error);
@@ -125,6 +130,23 @@ const AutoMatricula = () => {
       // Validate with zod
       const validatedData = matriculaSchema.parse(formData);
 
+      // Verificar novamente se já existe um aluno para prevenir race conditions
+      const { data: existingAluno } = await supabase
+        .from("alunos")
+        .select("id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (existingAluno) {
+        toast({
+          title: "Matrícula já existe",
+          description: "Você já possui uma matrícula registrada. Redirecionando...",
+          variant: "destructive",
+        });
+        setTimeout(() => navigate("/aluno"), 1500);
+        return;
+      }
+
       // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
@@ -156,13 +178,25 @@ const AutoMatricula = () => {
           encarregado_nome: formData.encarregado_nome,
           encarregado_telefone: formData.encarregado_telefone,
           encarregado_parentesco: formData.encarregado_parentesco,
-          estado: "activo",
+          estado: "pendente",
           data_matricula: format(new Date(), "yyyy-MM-dd"),
         })
         .select()
         .single();
 
-      if (alunoError) throw alunoError;
+      if (alunoError) {
+        // Tratar erro de chave duplicada especificamente
+        if (alunoError.code === '23505' || alunoError.message.includes('duplicate')) {
+          toast({
+            title: "Matrícula já existe",
+            description: "Você já possui uma matrícula registrada.",
+            variant: "destructive",
+          });
+          setTimeout(() => navigate("/aluno"), 1500);
+          return;
+        }
+        throw alunoError;
+      }
 
       // Create matricula record with pending status
       const { error: matriculaError } = await supabase
@@ -178,17 +212,13 @@ const AutoMatricula = () => {
 
       if (matriculaError) throw matriculaError;
 
-      // Assign aluno role
-      const { error: roleError } = await supabase
+      // Assign aluno role (ignorar se já existir)
+      await supabase
         .from("user_roles")
         .insert({
           user_id: user?.id,
           role: "aluno",
         });
-
-      if (roleError && !roleError.message.includes("duplicate")) {
-        throw roleError;
-      }
 
       toast({
         title: "Matrícula submetida com sucesso!",
@@ -196,7 +226,7 @@ const AutoMatricula = () => {
       });
 
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        window.location.href = "/aluno";
       }, 2000);
 
     } catch (error: any) {
