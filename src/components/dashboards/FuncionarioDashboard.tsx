@@ -1,12 +1,38 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Package, FileText, TrendingUp, TrendingDown } from "lucide-react";
+import { DollarSign, Package, FileText, TrendingUp, TrendingDown, UserCheck, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'];
+
+interface PendingMatricula {
+  id: string;
+  data_matricula: string;
+  aluno: {
+    id: string;
+    numero_matricula: string;
+    user_id: string;
+    profiles: {
+      nome_completo: string;
+      email: string;
+    };
+  };
+  ano_lectivo: {
+    ano: string;
+  };
+}
+
+interface Turma {
+  id: string;
+  nome: string;
+  classe: number;
+}
 
 export const FuncionarioDashboard = () => {
   const navigate = useNavigate();
@@ -21,10 +47,144 @@ export const FuncionarioDashboard = () => {
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [monthlyTrend, setMonthlyTrend] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingMatriculas, setPendingMatriculas] = useState<PendingMatricula[]>([]);
+  const [turmas, setTurmas] = useState<Turma[]>([]);
+  const [selectedTurmas, setSelectedTurmas] = useState<Record<string, string>>({});
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchPendingMatriculas();
+    fetchTurmas();
   }, []);
+
+  const fetchPendingMatriculas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("matriculas")
+        .select(`
+          id,
+          data_matricula,
+          aluno:alunos!fk_matriculas_aluno_id (
+            id,
+            numero_matricula,
+            user_id,
+            profiles!fk_alunos_user (
+              nome_completo,
+              email
+            )
+          ),
+          ano_lectivo:anos_lectivos!fk_matriculas_ano_lectivo_id (
+            ano
+          )
+        `)
+        .eq("status", "pendente")
+        .order("data_matricula", { ascending: false });
+
+      if (error) throw error;
+      setPendingMatriculas(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar matrículas pendentes:", error);
+    }
+  };
+
+  const fetchTurmas = async () => {
+    try {
+      const { data: anoActivo } = await supabase
+        .from("anos_lectivos")
+        .select("id")
+        .eq("activo", true)
+        .single();
+
+      if (anoActivo) {
+        const { data, error } = await supabase
+          .from("turmas")
+          .select("id, nome, classe")
+          .eq("ano_lectivo_id", anoActivo.id)
+          .order("classe", { ascending: true });
+
+        if (error) throw error;
+        setTurmas(data || []);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar turmas:", error);
+    }
+  };
+
+  const handleApproveMatricula = async (matriculaId: string, alunoId: string) => {
+    const turmaId = selectedTurmas[matriculaId];
+    if (!turmaId) {
+      toast({
+        title: "Seleccione uma turma",
+        description: "É necessário atribuir uma turma antes de aprovar a matrícula.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setProcessingId(matriculaId);
+    try {
+      // Update matricula status and turma
+      const { error: matriculaError } = await supabase
+        .from("matriculas")
+        .update({ status: "aprovada", turma_id: turmaId })
+        .eq("id", matriculaId);
+
+      if (matriculaError) throw matriculaError;
+
+      // Update aluno turma
+      const { error: alunoError } = await supabase
+        .from("alunos")
+        .update({ turma_id: turmaId, estado: "activo" })
+        .eq("id", alunoId);
+
+      if (alunoError) throw alunoError;
+
+      toast({
+        title: "Matrícula aprovada",
+        description: "O aluno foi matriculado com sucesso.",
+      });
+
+      fetchPendingMatriculas();
+    } catch (error) {
+      console.error("Erro ao aprovar matrícula:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível aprovar a matrícula.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleRejectMatricula = async (matriculaId: string) => {
+    setProcessingId(matriculaId);
+    try {
+      const { error } = await supabase
+        .from("matriculas")
+        .update({ status: "rejeitada", observacoes: "Matrícula rejeitada pela secretaria." })
+        .eq("id", matriculaId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Matrícula rejeitada",
+        description: "A matrícula foi rejeitada.",
+      });
+
+      fetchPendingMatriculas();
+    } catch (error) {
+      console.error("Erro ao rejeitar matrícula:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível rejeitar a matrícula.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -244,6 +404,89 @@ export const FuncionarioDashboard = () => {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+
+      {/* Pending Enrollments Section */}
+      {pendingMatriculas.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-amber-500" />
+              Matrículas Pendentes ({pendingMatriculas.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {pendingMatriculas.map((matricula) => (
+                <div
+                  key={matricula.id}
+                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg gap-4"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">
+                        {matricula.aluno?.profiles?.nome_completo || "Nome não disponível"}
+                      </span>
+                      <Badge variant="secondary" className="ml-2">
+                        {matricula.aluno?.numero_matricula}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      <span>{matricula.aluno?.profiles?.email}</span>
+                      <span className="mx-2">•</span>
+                      <span>Ano Lectivo: {matricula.ano_lectivo?.ano}</span>
+                      <span className="mx-2">•</span>
+                      <span>Submetida: {new Date(matricula.data_matricula).toLocaleDateString('pt-MZ')}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <Select
+                      value={selectedTurmas[matricula.id] || ""}
+                      onValueChange={(value) =>
+                        setSelectedTurmas((prev) => ({ ...prev, [matricula.id]: value }))
+                      }
+                    >
+                      <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Seleccionar turma" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {turmas.map((turma) => (
+                          <SelectItem key={turma.id} value={turma.id}>
+                            {turma.classe}ª Classe - {turma.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleApproveMatricula(matricula.id, matricula.aluno?.id)}
+                        disabled={processingId === matricula.id}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-1" />
+                        Aprovar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleRejectMatricula(matricula.id)}
+                        disabled={processingId === matricula.id}
+                        className="flex-1 sm:flex-none"
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Rejeitar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="p-6">
