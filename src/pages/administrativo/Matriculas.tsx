@@ -188,7 +188,7 @@ const Matriculas = () => {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    if (user && (userRole === "admin" || userRole === "secretario")) {
+    if (user && (userRole === "admin" || userRole === "secretario" || userRole === "funcionario")) {
       fetchData();
     }
   }, [user, userRole]);

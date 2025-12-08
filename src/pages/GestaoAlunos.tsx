@@ -138,7 +138,7 @@ const GestaoAlunos = () => {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    if (user && (userRole === "admin" || userRole === "secretario")) {
+    if (user && (userRole === "admin" || userRole === "secretario" || userRole === "funcionario")) {
       fetchAlunos();
       fetchTurmas();
     }
@@ -461,7 +461,7 @@ const GestaoAlunos = () => {
   }
 
   useEffect(() => {
-    if (!loading && (!user || (userRole !== "admin" && userRole !== "secretario"))) {
+    if (!loading && (!user || (userRole !== "admin" && userRole !== "secretario" && userRole !== "funcionario"))) {
       setShouldRedirect(true);
     }
   }, [loading, user, userRole]);
@@ -472,7 +472,7 @@ const GestaoAlunos = () => {
     }
   }, [shouldRedirect, navigate]);
 
-  if (!user || (userRole !== "admin" && userRole !== "secretario")) {
+  if (!user || (userRole !== "admin" && userRole !== "secretario" && userRole !== "funcionario")) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">

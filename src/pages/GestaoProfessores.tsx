@@ -80,13 +80,13 @@ const GestaoProfessores = () => {
     if (!loading && !user) {
       navigate("/login");
     }
-    if (!loading && user && userRole !== 'admin' && userRole !== 'secretario') {
+    if (!loading && user && userRole !== 'admin' && userRole !== 'secretario' && userRole !== 'funcionario') {
       navigate("/dashboard");
     }
   }, [user, loading, userRole, navigate]);
 
   useEffect(() => {
-    if (user && (userRole === 'admin' || userRole === 'secretario')) {
+    if (user && (userRole === 'admin' || userRole === 'secretario' || userRole === 'funcionario')) {
       fetchProfessores();
     }
   }, [user, userRole]);
@@ -292,7 +292,7 @@ const GestaoProfessores = () => {
     form.reset();
   };
 
-  if (loading || (userRole !== 'admin' && userRole !== 'secretario')) {
+  if (loading || (userRole !== 'admin' && userRole !== 'secretario' && userRole !== 'funcionario')) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[60vh]">
