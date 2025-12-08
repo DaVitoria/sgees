@@ -33,7 +33,7 @@ const Pedagogico = () => {
       color: "text-accent",
       bgColor: "bg-accent/10",
       route: "/pedagogico/atribuicao-disciplinas",
-      allowedRoles: ["admin", "funcionario", "secretario"],
+      allowedRoles: ["admin", "secretario"],
     },
     {
       title: "Lançamento de Notas",
