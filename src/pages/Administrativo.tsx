@@ -60,7 +60,7 @@ const Administrativo = () => {
       color: "text-success",
       bgColor: "bg-success/10",
       path: "/administrativo/gestao-financeira",
-      allowedRoles: ["admin", "tesoureiro", "funcionario"],
+      allowedRoles: ["admin", "tesoureiro"],
     },
     {
       title: "Inventário",

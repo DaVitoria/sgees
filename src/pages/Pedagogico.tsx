@@ -60,7 +60,7 @@ const Pedagogico = () => {
       color: "text-primary",
       bgColor: "bg-primary/10",
       route: "/pedagogico/aprovacoes",
-      allowedRoles: ["admin", "professor"],
+      allowedRoles: ["admin", "professor", "funcionario"],
     },
     {
       title: "Gestão de Exames",
