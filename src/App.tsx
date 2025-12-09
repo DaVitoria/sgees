@@ -30,6 +30,7 @@ import Documentos from "./pages/administrativo/Documentos";
 import RelatoriosAdmin from "./pages/administrativo/Relatorios";
 import GestaoUtilizadores from "./pages/administrativo/GestaoUtilizadores";
 import Organograma from "./pages/administrativo/Organograma";
+import AtribuirRoles from "./pages/administrativo/AtribuirRoles";
 import AcompanhamentoMatricula from "./pages/AcompanhamentoMatricula";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/administrativo/relatorios" element={<RelatoriosAdmin />} />
             <Route path="/administrativo/gestao-utilizadores" element={<GestaoUtilizadores />} />
             <Route path="/administrativo/organograma" element={<Organograma />} />
+            <Route path="/administrativo/atribuir-roles" element={<AtribuirRoles />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

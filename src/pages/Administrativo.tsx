@@ -27,6 +27,15 @@ const Administrativo = () => {
       allowedRoles: ["admin"],
     },
     {
+      title: "Atribuir Perfis",
+      description: "Atribuir perfis a utilizadores sem role definido",
+      icon: Users,
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
+      path: "/administrativo/atribuir-roles",
+      allowedRoles: ["admin", "secretario"],
+    },
+    {
       title: "Gestão de Professores",
       description: "Cadastrar e gerir professores do sistema",
       icon: GraduationCap,
