@@ -87,14 +87,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Redirecionar baseado no role
       if (roleData?.role === 'aluno') {
-        navigate('/aluno');
+        // Verificar se aluno já tem matrícula
+        const { data: alunoData } = await supabase
+          .from("alunos")
+          .select("id")
+          .eq("user_id", data.user.id)
+          .maybeSingle();
+        
+        if (alunoData) {
+          navigate('/aluno');
+        } else {
+          navigate('/auto-matricula');
+        }
       } else if (roleData?.role === 'professor') {
         navigate('/professor');
-      } else if (roleData?.role) {
-        navigate('/dashboard');
       } else {
-        // Sem role, redirecionar para auto-matrícula
-        navigate('/auto-matricula');
+        // Sem role ou outro role, redirecionar para dashboard
+        navigate('/dashboard');
       }
     }
     

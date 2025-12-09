@@ -58,12 +58,12 @@ const AutoMatricula = () => {
       return;
     }
 
-    // Allow access for users without role OR with 'aluno' role only
-    // Redirect if user has any other role
-    if (!authLoading && user && userRole && userRole !== 'aluno') {
+    // Allow access ONLY for users with 'aluno' role
+    // Users without role or with other roles are redirected
+    if (!authLoading && user && userRole !== 'aluno') {
       toast({
         title: "Acesso Negado",
-        description: "Esta página é apenas para alunos ou novos utilizadores.",
+        description: "Esta página é apenas para alunos.",
         variant: "destructive",
       });
       navigate("/dashboard");

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { ProfessorDashboard } from "@/components/dashboards/ProfessorDashboard";
 import { AlunoDashboard } from "@/components/dashboards/AlunoDashboard";
@@ -12,18 +13,30 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login");
-    } else if (!loading && user && userRole === 'aluno') {
-      // Redirecionar alunos para seu portal específico
-      navigate("/aluno");
-    } else if (!loading && user && userRole === 'professor') {
-      // Redirecionar professores para seu portal específico
-      navigate("/professor");
-    } else if (!loading && user && !userRole) {
-      // Utilizadores sem role, redirecionar para auto-matrícula
-      navigate("/auto-matricula");
-    }
+    const checkAndRedirect = async () => {
+      if (!loading && !user) {
+        navigate("/login");
+      } else if (!loading && user && userRole === 'aluno') {
+        // Verificar se aluno já tem matrícula
+        const { data: alunoData } = await supabase
+          .from("alunos")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (alunoData) {
+          navigate("/aluno");
+        } else {
+          navigate("/auto-matricula");
+        }
+      } else if (!loading && user && userRole === 'professor') {
+        // Redirecionar professores para seu portal específico
+        navigate("/professor");
+      }
+      // Utilizadores sem role ficam no dashboard (sem acesso a funcionalidades)
+    };
+    
+    checkAndRedirect();
   }, [user, loading, userRole, navigate]);
 
   if (loading) {
