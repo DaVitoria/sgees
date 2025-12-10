@@ -7,6 +7,7 @@ import { AdminDashboard } from "@/components/dashboards/AdminDashboard";
 import { ProfessorDashboard } from "@/components/dashboards/ProfessorDashboard";
 import { AlunoDashboard } from "@/components/dashboards/AlunoDashboard";
 import { FuncionarioDashboard } from "@/components/dashboards/FuncionarioDashboard";
+import { SecretarioDashboard } from "@/components/dashboards/SecretarioDashboard";
 
 const Dashboard = () => {
   const { user, loading, userRole } = useAuth();
@@ -56,8 +57,9 @@ const Dashboard = () => {
   const renderDashboard = () => {
     switch (userRole) {
       case 'admin':
-      case 'secretario':
         return <AdminDashboard />;
+      case 'secretario':
+        return <SecretarioDashboard />;
       case 'professor':
         return <ProfessorDashboard />;
       case 'aluno':
