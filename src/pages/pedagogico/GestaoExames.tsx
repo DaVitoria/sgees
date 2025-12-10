@@ -500,12 +500,12 @@ const GestaoExames = () => {
 
               <div className="space-y-2">
                 <Label>Turma</Label>
-                <Select value={selectedTurma} onValueChange={setSelectedTurma}>
+                <Select value={selectedTurma || "all"} onValueChange={(val) => setSelectedTurma(val === "all" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todas as turmas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as turmas</SelectItem>
+                    <SelectItem value="all">Todas as turmas</SelectItem>
                     {turmas.map((turma) => (
                       <SelectItem key={turma.id} value={turma.id}>
                         {turma.nome} - {turma.classe}ª Classe
@@ -517,12 +517,12 @@ const GestaoExames = () => {
 
               <div className="space-y-2">
                 <Label>Disciplina</Label>
-                <Select value={selectedDisciplina} onValueChange={setSelectedDisciplina}>
+                <Select value={selectedDisciplina || "all"} onValueChange={(val) => setSelectedDisciplina(val === "all" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Todas as disciplinas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as disciplinas</SelectItem>
+                    <SelectItem value="all">Todas as disciplinas</SelectItem>
                     {disciplinas.map((disciplina) => (
                       <SelectItem key={disciplina.id} value={disciplina.id}>
                         {disciplina.nome}
