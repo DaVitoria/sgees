@@ -66,10 +66,10 @@ const Pedagogico = () => {
       title: "Gestão de Exames",
       description: "Gerir exames das classes 9ª, 10ª e 12ª",
       icon: GraduationCap,
-      color: "text-red-500",
-      bgColor: "bg-red-500/10",
+      color: "text-destructive",
+      bgColor: "bg-destructive/10",
       route: "/pedagogico/gestao-exames",
-      allowedRoles: ["admin", "professor"],
+      allowedRoles: ["admin", "professor", "secretario"],
     },
   ];
 
