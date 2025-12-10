@@ -197,6 +197,53 @@ const GestaoUtilizadores = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    // Prevent self-deletion
+    if (userId === user?.id) {
+      toast({
+        title: "Operação não permitida",
+        description: "Não pode eliminar a sua própria conta",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${sessionData.session?.access_token}`,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Erro ao eliminar utilizador");
+      }
+
+      toast({
+        title: "Utilizador eliminado",
+        description: `${userName} foi eliminado com sucesso`
+      });
+
+      fetchUsers();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao eliminar utilizador",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.nome_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -430,67 +477,100 @@ const GestaoUtilizadores = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Dialog open={isDialogOpen && selectedUser?.id === u.id} onOpenChange={(open) => {
-                            setIsDialogOpen(open);
-                            if (!open) {
-                              setSelectedUser(null);
-                              setSelectedRole("");
-                            }
-                          }}>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedUser(u)}
-                              >
-                                <Plus className="h-4 w-4 mr-1" />
-                                Atribuir Role
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Atribuir Role</DialogTitle>
-                                <DialogDescription>
-                                  Selecione o role a atribuir a {u.nome_completo}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                  <Label>Role</Label>
-                                  <Select value={selectedRole} onValueChange={setSelectedRole}>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Selecione o role" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {ROLES.filter(r => !u.roles.includes(r.value)).map((role) => (
-                                        <SelectItem key={role.value} value={role.value}>
-                                          <div className="flex items-center gap-2">
-                                            <role.icon className="h-4 w-4" />
-                                            {role.label}
-                                          </div>
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                {selectedRole && (
-                                  <div className="p-3 bg-muted rounded-lg">
-                                    <p className="text-sm text-muted-foreground">
-                                      {ROLES.find(r => r.value === selectedRole)?.description}
-                                    </p>
+                          <div className="flex items-center justify-end gap-2">
+                            <Dialog open={isDialogOpen && selectedUser?.id === u.id} onOpenChange={(open) => {
+                              setIsDialogOpen(open);
+                              if (!open) {
+                                setSelectedUser(null);
+                                setSelectedRole("");
+                              }
+                            }}>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedUser(u)}
+                                >
+                                  <Plus className="h-4 w-4 mr-1" />
+                                  Atribuir Role
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Atribuir Role</DialogTitle>
+                                  <DialogDescription>
+                                    Selecione o role a atribuir a {u.nome_completo}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <Label>Role</Label>
+                                    <Select value={selectedRole} onValueChange={setSelectedRole}>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Selecione o role" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {ROLES.filter(r => !u.roles.includes(r.value)).map((role) => (
+                                          <SelectItem key={role.value} value={role.value}>
+                                            <div className="flex items-center gap-2">
+                                              <role.icon className="h-4 w-4" />
+                                              {role.label}
+                                            </div>
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
                                   </div>
-                                )}
-                              </div>
-                              <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                                  Cancelar
+                                  {selectedRole && (
+                                    <div className="p-3 bg-muted rounded-lg">
+                                      <p className="text-sm text-muted-foreground">
+                                        {ROLES.find(r => r.value === selectedRole)?.description}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                <DialogFooter>
+                                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                                    Cancelar
+                                  </Button>
+                                  <Button onClick={handleAddRole} disabled={!selectedRole}>
+                                    Atribuir
+                                  </Button>
+                                </DialogFooter>
+                              </DialogContent>
+                            </Dialog>
+                            
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={u.id === user?.id}
+                                >
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
-                                <Button onClick={handleAddRole} disabled={!selectedRole}>
-                                  Atribuir
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Eliminar Utilizador</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja eliminar permanentemente o utilizador <strong>{u.nome_completo}</strong>?
+                                    <br /><br />
+                                    Esta ação é irreversível e irá remover todos os dados associados a este utilizador.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteUser(u.id, u.nome_completo)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
