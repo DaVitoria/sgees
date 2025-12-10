@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Users,
   GraduationCap,
@@ -13,10 +15,117 @@ import {
   Building2,
   School,
   TrendingUp,
+  Clock,
+  Wallet,
 } from "lucide-react";
+
+interface Statistics {
+  totalAlunos: number;
+  totalProfessores: number;
+  matriculasPendentes: number;
+  saldoFinanceiro: number;
+  totalEntradas: number;
+  totalSaidas: number;
+}
 
 export const SecretarioDashboard = () => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState<Statistics>({
+    totalAlunos: 0,
+    totalProfessores: 0,
+    matriculasPendentes: 0,
+    saldoFinanceiro: 0,
+    totalEntradas: 0,
+    totalSaidas: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        // Fetch total alunos
+        const { count: alunosCount } = await supabase
+          .from("alunos")
+          .select("*", { count: "exact", head: true })
+          .eq("estado", "activo");
+
+        // Fetch total professores
+        const { count: professoresCount } = await supabase
+          .from("professores")
+          .select("*", { count: "exact", head: true });
+
+        // Fetch matrículas pendentes
+        const { count: matriculasPendentesCount } = await supabase
+          .from("matriculas")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "pendente");
+
+        // Fetch financial summary
+        const { data: financialData } = await supabase.rpc("get_financial_summary");
+        
+        const financial = financialData as { saldo_actual?: number; total_entradas?: number; total_saidas?: number } | null;
+
+        setStats({
+          totalAlunos: alunosCount || 0,
+          totalProfessores: professoresCount || 0,
+          matriculasPendentes: matriculasPendentesCount || 0,
+          saldoFinanceiro: financial?.saldo_actual || 0,
+          totalEntradas: financial?.total_entradas || 0,
+          totalSaidas: financial?.total_saidas || 0,
+        });
+      } catch (error) {
+        console.error("Erro ao carregar estatísticas:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatistics();
+  }, []);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-MZ", {
+      style: "currency",
+      currency: "MZN",
+      minimumFractionDigits: 2,
+    }).format(value);
+  };
+
+  const statisticsCards = [
+    {
+      title: "Total de Alunos",
+      value: stats.totalAlunos.toString(),
+      icon: GraduationCap,
+      color: "text-blue-600",
+      bgColor: "bg-blue-100",
+      description: "Alunos activos",
+    },
+    {
+      title: "Total de Professores",
+      value: stats.totalProfessores.toString(),
+      icon: Users,
+      color: "text-green-600",
+      bgColor: "bg-green-100",
+      description: "Professores registados",
+    },
+    {
+      title: "Matrículas Pendentes",
+      value: stats.matriculasPendentes.toString(),
+      icon: Clock,
+      color: "text-orange-600",
+      bgColor: "bg-orange-100",
+      description: "Aguardam aprovação",
+      highlight: stats.matriculasPendentes > 0,
+    },
+    {
+      title: "Saldo Financeiro",
+      value: formatCurrency(stats.saldoFinanceiro),
+      icon: Wallet,
+      color: stats.saldoFinanceiro >= 0 ? "text-emerald-600" : "text-red-600",
+      bgColor: stats.saldoFinanceiro >= 0 ? "bg-emerald-100" : "bg-red-100",
+      description: `Entradas: ${formatCurrency(stats.totalEntradas)}`,
+    },
+  ];
 
   const administrativeModules = [
     {
@@ -119,6 +228,31 @@ export const SecretarioDashboard = () => {
         <p className="text-muted-foreground mt-2">
           Bem-vindo ao painel de gestão. Aceda às funcionalidades administrativas e pedagógicas abaixo.
         </p>
+      </div>
+
+      {/* Estatísticas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statisticsCards.map((stat) => (
+          <Card
+            key={stat.title}
+            className={`relative overflow-hidden ${stat.highlight ? "ring-2 ring-orange-400 animate-pulse" : ""}`}
+          >
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardDescription className="text-sm font-medium">{stat.title}</CardDescription>
+                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${stat.color}`}>
+                {loading ? "..." : stat.value}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Área Administrativa */}
