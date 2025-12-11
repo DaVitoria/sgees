@@ -33,6 +33,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus, Eye, Search } from "lucide-react";
 import { z } from "zod";
 
+// Valores permitidos pelo check constraint alunos_estado_check
+const ESTADO_ALUNO_OPTIONS = [
+  { value: 'activo', label: 'Activo' },
+  { value: 'transferido', label: 'Transferido' },
+  { value: 'concluido', label: 'Concluído' },
+  { value: 'desistente', label: 'Desistente' },
+] as const;
+
 const alunoSchema = z.object({
   nome_completo: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(100),
   email: z.string().email("Email inválido").max(255),
@@ -43,6 +51,10 @@ const alunoSchema = z.object({
   endereco: z.string().min(5, "Endereço deve ter pelo menos 5 caracteres").max(200),
   numero_matricula: z.string().min(3, "Número de matrícula é obrigatório").max(50),
   turma_id: z.string().optional(),
+  estado: z.string().refine(
+    (val) => ['activo', 'transferido', 'concluido', 'desistente'].includes(val),
+    { message: "Estado deve ser: activo, transferido, concluido ou desistente" }
+  ),
   encarregado_nome: z.string().min(3, "Nome do encarregado é obrigatório").max(100),
   encarregado_telefone: z.string().min(9, "Telefone do encarregado é obrigatório").max(20),
   encarregado_parentesco: z.string().min(2, "Parentesco é obrigatório").max(50),
@@ -124,6 +136,7 @@ const GestaoAlunos = () => {
     endereco: "",
     numero_matricula: "",
     turma_id: "",
+    estado: "activo",
     encarregado_nome: "",
     encarregado_telefone: "",
     encarregado_parentesco: "",
@@ -268,6 +281,7 @@ const GestaoAlunos = () => {
           .update({
             numero_matricula: validatedData.numero_matricula,
             turma_id: validatedData.turma_id || null,
+            estado: validatedData.estado,
             encarregado_nome: validatedData.encarregado_nome,
             encarregado_telefone: validatedData.encarregado_telefone,
             encarregado_parentesco: validatedData.encarregado_parentesco,
@@ -337,6 +351,7 @@ const GestaoAlunos = () => {
             user_id: authData.user.id,
             numero_matricula: validatedData.numero_matricula,
             turma_id: validatedData.turma_id || null,
+            estado: validatedData.estado,
             encarregado_nome: validatedData.encarregado_nome,
             encarregado_telefone: validatedData.encarregado_telefone,
             encarregado_parentesco: validatedData.encarregado_parentesco,
@@ -362,6 +377,7 @@ const GestaoAlunos = () => {
         endereco: "",
         numero_matricula: "",
         turma_id: "",
+        estado: "activo",
         encarregado_nome: "",
         encarregado_telefone: "",
         encarregado_parentesco: "",
@@ -409,6 +425,7 @@ const GestaoAlunos = () => {
       endereco: aluno.profiles.endereco || "",
       numero_matricula: aluno.numero_matricula,
       turma_id: aluno.turma_id || "",
+      estado: (aluno.estado as 'activo' | 'transferido' | 'concluido' | 'desistente') || "activo",
       encarregado_nome: aluno.encarregado_nome,
       encarregado_telefone: aluno.encarregado_telefone,
       encarregado_parentesco: aluno.encarregado_parentesco || "",
@@ -499,6 +516,7 @@ const GestaoAlunos = () => {
               endereco: "",
               numero_matricula: "",
               turma_id: "",
+              estado: "activo",
               encarregado_nome: "",
               encarregado_telefone: "",
               encarregado_parentesco: "",
@@ -695,6 +713,28 @@ const GestaoAlunos = () => {
                     onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
                   />
                   {errors.endereco && <p className="text-sm text-destructive mt-1">{errors.endereco}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="estado">Estado do Aluno *</Label>
+                  <Select 
+                    value={formData.estado} 
+                    onValueChange={(value: 'activo' | 'transferido' | 'concluido' | 'desistente') => setFormData({ ...formData, estado: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ESTADO_ALUNO_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.estado && <p className="text-sm text-destructive mt-1">{errors.estado}</p>}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Valores permitidos: Activo, Transferido, Concluído, Desistente
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="turma_id">Turma</Label>
