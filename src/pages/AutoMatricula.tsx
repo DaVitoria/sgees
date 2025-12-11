@@ -178,7 +178,7 @@ const AutoMatricula = () => {
           encarregado_nome: formData.encarregado_nome,
           encarregado_telefone: formData.encarregado_telefone,
           encarregado_parentesco: formData.encarregado_parentesco,
-          estado: "pendente",
+          estado: "activo",
           data_matricula: format(new Date(), "yyyy-MM-dd"),
         })
         .select()
