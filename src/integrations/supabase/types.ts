@@ -852,6 +852,7 @@ export type Database = {
           endereco: string | null
           id: string
           nome_completo: string
+          sexo: string | null
           telefone: string | null
           updated_at: string | null
         }
@@ -863,6 +864,7 @@ export type Database = {
           endereco?: string | null
           id: string
           nome_completo: string
+          sexo?: string | null
           telefone?: string | null
           updated_at?: string | null
         }
@@ -874,6 +876,7 @@ export type Database = {
           endereco?: string | null
           id?: string
           nome_completo?: string
+          sexo?: string | null
           telefone?: string | null
           updated_at?: string | null
         }
@@ -923,12 +926,51 @@ export type Database = {
           },
         ]
       }
+      trimestres: {
+        Row: {
+          ano_lectivo_id: string
+          bloqueado: boolean | null
+          created_at: string | null
+          data_fim: string
+          data_inicio: string
+          id: string
+          numero: number
+        }
+        Insert: {
+          ano_lectivo_id: string
+          bloqueado?: boolean | null
+          created_at?: string | null
+          data_fim: string
+          data_inicio: string
+          id?: string
+          numero: number
+        }
+        Update: {
+          ano_lectivo_id?: string
+          bloqueado?: boolean | null
+          created_at?: string | null
+          data_fim?: string
+          data_inicio?: string
+          id?: string
+          numero?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trimestres_ano_lectivo_id_fkey"
+            columns: ["ano_lectivo_id"]
+            isOneToOne: false
+            referencedRelation: "anos_lectivos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       turmas: {
         Row: {
           ano_lectivo_id: string
           capacidade: number | null
           classe: number
           created_at: string | null
+          director_turma_id: string | null
           id: string
           nome: string
         }
@@ -937,6 +979,7 @@ export type Database = {
           capacidade?: number | null
           classe: number
           created_at?: string | null
+          director_turma_id?: string | null
           id?: string
           nome: string
         }
@@ -945,6 +988,7 @@ export type Database = {
           capacidade?: number | null
           classe?: number
           created_at?: string | null
+          director_turma_id?: string | null
           id?: string
           nome?: string
         }
@@ -961,6 +1005,13 @@ export type Database = {
             columns: ["ano_lectivo_id"]
             isOneToOne: false
             referencedRelation: "anos_lectivos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "turmas_director_turma_id_fkey"
+            columns: ["director_turma_id"]
+            isOneToOne: false
+            referencedRelation: "professores"
             referencedColumns: ["id"]
           },
         ]
@@ -1012,6 +1063,7 @@ export type Database = {
       }
       gerar_numero_matricula: { Args: never; Returns: string }
       get_financial_summary: { Args: never; Returns: Json }
+      get_gender_statistics: { Args: never; Returns: Json }
       get_monthly_financial_evolution: { Args: never; Returns: Json }
       get_organizational_structure: { Args: never; Returns: Json }
       get_profiles_with_audit: {
@@ -1024,6 +1076,7 @@ export type Database = {
           endereco: string | null
           id: string
           nome_completo: string
+          sexo: string | null
           telefone: string | null
           updated_at: string | null
         }[]
@@ -1035,11 +1088,20 @@ export type Database = {
         }
       }
       get_school_statistics: { Args: never; Returns: Json }
+      get_users_without_role_count: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_director_turma: {
+        Args: { p_turma_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_trimestre_bloqueado: {
+        Args: { p_ano_lectivo_id: string; p_trimestre: number }
         Returns: boolean
       }
     }

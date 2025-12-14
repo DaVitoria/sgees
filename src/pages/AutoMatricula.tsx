@@ -43,6 +43,7 @@ const AutoMatricula = () => {
     data_nascimento: "",
     telefone: "",
     endereco: "",
+    sexo: "",
     encarregado_nome: "",
     encarregado_telefone: "",
     encarregado_parentesco: "",
@@ -156,6 +157,7 @@ const AutoMatricula = () => {
           data_nascimento: validatedData.data_nascimento,
           telefone: validatedData.telefone,
           endereco: validatedData.endereco,
+          sexo: formData.sexo || null,
         })
         .eq("id", user?.id);
 
@@ -333,6 +335,22 @@ const AutoMatricula = () => {
                     onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                     placeholder="+258 84 123 4567"
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sexo">Sexo *</Label>
+                  <Select
+                    value={formData.sexo}
+                    onValueChange={(value) => setFormData({ ...formData, sexo: value })}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o sexo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="H">Masculino</SelectItem>
+                      <SelectItem value="M">Feminino</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="endereco">Endereço</Label>

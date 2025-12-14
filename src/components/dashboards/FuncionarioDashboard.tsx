@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Package, FileText, TrendingUp, TrendingDown, UserCheck, Clock, CheckCircle, XCircle } from "lucide-react";
+import { DollarSign, Package, FileText, TrendingUp, TrendingDown, UserCheck, Clock, CheckCircle, XCircle, Users, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -34,6 +34,13 @@ interface Turma {
   classe: number;
 }
 
+interface GenderStats {
+  totalHomens: number;
+  totalMulheres: number;
+  alunosHomens: number;
+  alunosMulheres: number;
+}
+
 export const FuncionarioDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState({
@@ -51,11 +58,15 @@ export const FuncionarioDashboard = () => {
   const [turmas, setTurmas] = useState<Turma[]>([]);
   const [selectedTurmas, setSelectedTurmas] = useState<Record<string, string>>({});
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [usersWithoutRole, setUsersWithoutRole] = useState(0);
+  const [genderStats, setGenderStats] = useState<GenderStats>({ totalHomens: 0, totalMulheres: 0, alunosHomens: 0, alunosMulheres: 0 });
 
   useEffect(() => {
     fetchDashboardData();
     fetchPendingMatriculas();
     fetchTurmas();
+    fetchUsersWithoutRole();
+    fetchGenderStats();
   }, []);
 
   const fetchPendingMatriculas = async () => {
@@ -108,6 +119,34 @@ export const FuncionarioDashboard = () => {
       }
     } catch (error) {
       console.error("Erro ao carregar turmas:", error);
+    }
+  };
+
+  const fetchUsersWithoutRole = async () => {
+    try {
+      const { data, error } = await supabase.rpc("get_users_without_role_count");
+      if (error) throw error;
+      setUsersWithoutRole(data || 0);
+    } catch (error) {
+      console.error("Erro ao carregar utilizadores sem role:", error);
+    }
+  };
+
+  const fetchGenderStats = async () => {
+    try {
+      const { data, error } = await supabase.rpc("get_gender_statistics");
+      if (error) throw error;
+      if (data) {
+        const genderData = data as any;
+        setGenderStats({
+          totalHomens: genderData.total_homens || 0,
+          totalMulheres: genderData.total_mulheres || 0,
+          alunosHomens: genderData.alunos_homens || 0,
+          alunosMulheres: genderData.alunos_mulheres || 0,
+        });
+      }
+    } catch (error) {
+      console.error("Erro ao carregar estatísticas de género:", error);
     }
   };
 
@@ -282,6 +321,72 @@ export const FuncionarioDashboard = () => {
         <p className="text-muted-foreground">
           Gestão financeira e inventário
         </p>
+      </div>
+
+      {/* Alerta de utilizadores sem role */}
+      {usersWithoutRole > 0 && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-amber-100 p-2 rounded-full">
+                  <UserX className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-amber-900">{usersWithoutRole} utilizador(es) aguardam atribuição de perfil</p>
+                  <p className="text-sm text-amber-700">Existem utilizadores registados sem role atribuído.</p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                className="border-amber-400 text-amber-700 hover:bg-amber-100"
+                onClick={() => navigate("/administrativo/atribuir-roles")}
+              >
+                Atribuir Perfis
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Estatísticas de Género */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <div className="flex items-center gap-3">
+            <Users className="h-8 w-8 text-blue-600" />
+            <div>
+              <p className="text-sm text-blue-600">Alunos Homens</p>
+              <p className="text-xl font-bold text-blue-900">{genderStats.alunosHomens}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 bg-pink-50 border-pink-200">
+          <div className="flex items-center gap-3">
+            <Users className="h-8 w-8 text-pink-600" />
+            <div>
+              <p className="text-sm text-pink-600">Alunas Mulheres</p>
+              <p className="text-xl font-bold text-pink-900">{genderStats.alunosMulheres}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 bg-indigo-50 border-indigo-200">
+          <div className="flex items-center gap-3">
+            <Users className="h-8 w-8 text-indigo-600" />
+            <div>
+              <p className="text-sm text-indigo-600">Total Homens (Sistema)</p>
+              <p className="text-xl font-bold text-indigo-900">{genderStats.totalHomens}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4 bg-purple-50 border-purple-200">
+          <div className="flex items-center gap-3">
+            <Users className="h-8 w-8 text-purple-600" />
+            <div>
+              <p className="text-sm text-purple-600">Total Mulheres (Sistema)</p>
+              <p className="text-xl font-bold text-purple-900">{genderStats.totalMulheres}</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">

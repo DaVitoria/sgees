@@ -14,8 +14,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, ArrowLeft, Calculator } from "lucide-react";
+import { Plus, Pencil, ArrowLeft, Calculator, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 const notaSchema = z.object({
   aluno_id: z.string().min(1, "Selecione um aluno"),
@@ -43,6 +44,7 @@ const LancamentoNotas = () => {
   const [editingNota, setEditingNota] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [selectedTrimestre, setSelectedTrimestre] = useState<number>(1);
+  const [trimestreBloqueado, setTrimestreBloqueado] = useState(false);
 
   const form = useForm<NotaFormData>({
     resolver: zodResolver(notaSchema),
@@ -99,6 +101,23 @@ const LancamentoNotas = () => {
       setAlunos(alunosRes.data || []);
       setDisciplinas(disciplinasRes.data || []);
       setAnosLectivos(anosRes.data || []);
+
+      // Verificar se trimestre está bloqueado
+      if (anosRes.data && anosRes.data.length > 0) {
+        const { data: trimestreData } = await supabase
+          .from("trimestres")
+          .select("bloqueado, data_fim")
+          .eq("ano_lectivo_id", anosRes.data[0].id)
+          .eq("numero", selectedTrimestre)
+          .maybeSingle();
+
+        if (trimestreData) {
+          const isBloqueado = trimestreData.bloqueado || new Date() > new Date(trimestreData.data_fim);
+          setTrimestreBloqueado(isBloqueado);
+        } else {
+          setTrimestreBloqueado(false);
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao carregar dados",
@@ -227,11 +246,19 @@ const LancamentoNotas = () => {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setEditingNota(null); form.reset(); }}>
+              <Button 
+                onClick={() => { setEditingNota(null); form.reset(); }}
+                disabled={trimestreBloqueado}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Lançar Nota
               </Button>
             </DialogTrigger>
+            {trimestreBloqueado && (
+              <Badge variant="destructive" className="ml-2">
+                Trimestre Bloqueado
+              </Badge>
+            )}
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>{editingNota ? "Editar Nota" : "Lançar Nova Nota"}</DialogTitle>

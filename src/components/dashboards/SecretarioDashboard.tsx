@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Clock,
   Wallet,
+  UserX,
 } from "lucide-react";
 
 interface Statistics {
@@ -26,6 +27,11 @@ interface Statistics {
   saldoFinanceiro: number;
   totalEntradas: number;
   totalSaidas: number;
+}
+
+interface GenderStats {
+  alunosHomens: number;
+  alunosMulheres: number;
 }
 
 export const SecretarioDashboard = () => {
@@ -39,6 +45,8 @@ export const SecretarioDashboard = () => {
     totalSaidas: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [usersWithoutRole, setUsersWithoutRole] = useState(0);
+  const [genderStats, setGenderStats] = useState<GenderStats>({ alunosHomens: 0, alunosMulheres: 0 });
 
   useEffect(() => {
     const fetchStatistics = async () => {
@@ -64,6 +72,20 @@ export const SecretarioDashboard = () => {
         const { data: financialData } = await supabase.rpc("get_financial_summary");
         
         const financial = financialData as { saldo_actual?: number; total_entradas?: number; total_saidas?: number } | null;
+
+        // Fetch users without role
+        const { data: usersData } = await supabase.rpc("get_users_without_role_count");
+        setUsersWithoutRole(usersData || 0);
+
+        // Fetch gender stats
+        const { data: genderData } = await supabase.rpc("get_gender_statistics");
+        if (genderData) {
+          const gd = genderData as any;
+          setGenderStats({
+            alunosHomens: gd.alunos_homens || 0,
+            alunosMulheres: gd.alunos_mulheres || 0,
+          });
+        }
 
         setStats({
           totalAlunos: alunosCount || 0,
@@ -98,7 +120,7 @@ export const SecretarioDashboard = () => {
       icon: GraduationCap,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
-      description: "Alunos activos",
+      description: `H: ${genderStats.alunosHomens} | M: ${genderStats.alunosMulheres}`,
     },
     {
       title: "Total de Professores",
@@ -116,6 +138,16 @@ export const SecretarioDashboard = () => {
       bgColor: "bg-orange-100",
       description: "Aguardam aprovação",
       highlight: stats.matriculasPendentes > 0,
+    },
+    {
+      title: "Utilizadores Sem Perfil",
+      value: usersWithoutRole.toString(),
+      icon: UserX,
+      color: "text-amber-600",
+      bgColor: "bg-amber-100",
+      description: "Aguardam atribuição de role",
+      highlight: usersWithoutRole > 0,
+      action: () => navigate("/administrativo/atribuir-roles"),
     },
     {
       title: "Saldo Financeiro",
@@ -231,11 +263,12 @@ export const SecretarioDashboard = () => {
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {statisticsCards.map((stat) => (
           <Card
             key={stat.title}
-            className={`relative overflow-hidden ${stat.highlight ? "ring-2 ring-orange-400 animate-pulse" : ""}`}
+            className={`relative overflow-hidden cursor-pointer transition-all hover:shadow-md ${stat.highlight ? "ring-2 ring-orange-400 animate-pulse" : ""}`}
+            onClick={() => stat.action && stat.action()}
           >
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">

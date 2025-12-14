@@ -32,6 +32,7 @@ import GestaoUtilizadores from "./pages/administrativo/GestaoUtilizadores";
 import Organograma from "./pages/administrativo/Organograma";
 import AtribuirRoles from "./pages/administrativo/AtribuirRoles";
 import AcompanhamentoMatricula from "./pages/AcompanhamentoMatricula";
+import DirectorTurma from "./pages/DirectorTurma";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/pedagogico/gestao-exames" element={<GestaoExames />} />
             <Route path="/aluno" element={<Aluno />} />
             <Route path="/professor" element={<Professor />} />
+            <Route path="/professor/director-turma" element={<DirectorTurma />} />
             <Route path="/administrativo/gestao-professores" element={<GestaoProfessores />} />
             <Route path="/administrativo/gestao-alunos" element={<GestaoAlunos />} />
             <Route path="/administrativo/gestao-financeira" element={<GestaoFinanceira />} />
