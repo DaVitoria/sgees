@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { generateTurmaReportPDF } from "@/utils/generateTurmaReportPDF";
 import { 
   Users, 
   BookOpen, 
@@ -52,6 +53,8 @@ const DirectorTurma = () => {
   const [genderStats, setGenderStats] = useState({ homens: 0, mulheres: 0, indefinido: 0 });
   const [approvalStats, setApprovalStats] = useState({ aprovados: 0, reprovados: 0, emExame: 0, pendentes: 0 });
   const [gradesByDiscipline, setGradesByDiscipline] = useState<any[]>([]);
+  const [directorNome, setDirectorNome] = useState<string>("");
+  const [anoLectivo, setAnoLectivo] = useState<string>("");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -65,10 +68,10 @@ const DirectorTurma = () => {
 
   const fetchDirectorTurmaData = async () => {
     try {
-      // Verificar se o professor é director de turma
+      // Verificar se o professor é director de turma e buscar nome
       const { data: professorData } = await supabase
         .from("professores")
-        .select("id")
+        .select("id, profiles!fk_professores_user_id(nome_completo)")
         .eq("user_id", user?.id)
         .maybeSingle();
 
@@ -81,6 +84,19 @@ const DirectorTurma = () => {
         navigate("/professor");
         return;
       }
+
+      // Guardar nome do director
+      const profProfile = professorData.profiles as any;
+      setDirectorNome(profProfile?.nome_completo || "Director");
+
+      // Buscar ano lectivo activo
+      const { data: anoData } = await supabase
+        .from("anos_lectivos")
+        .select("ano")
+        .eq("activo", true)
+        .maybeSingle();
+      
+      setAnoLectivo(anoData?.ano || new Date().getFullYear().toString());
 
       // Buscar turma onde é director (usando o param ou a primeira turma)
       let turmaQuery = supabase
@@ -207,11 +223,37 @@ const DirectorTurma = () => {
   };
 
   const handleDownloadReport = () => {
-    toast({
-      title: "Relatório em Preparação",
-      description: "O download do relatório será iniciado em breve.",
+    if (!turma) return;
+
+    const mediaGeral = alunos.length > 0
+      ? alunos.reduce((acc, a) => acc + a.mediaGeral, 0) / alunos.length
+      : 0;
+
+    generateTurmaReportPDF({
+      turma: {
+        nome: turma.nome,
+        classe: turma.classe,
+      },
+      directorNome,
+      anoLectivo,
+      alunos,
+      disciplinas: gradesByDiscipline,
+      stats: {
+        totalAlunos: alunos.length,
+        homens: genderStats.homens,
+        mulheres: genderStats.mulheres,
+        aprovados: approvalStats.aprovados,
+        reprovados: approvalStats.reprovados,
+        emExame: approvalStats.emExame,
+        pendentes: approvalStats.pendentes,
+        mediaGeral,
+      },
     });
-    // TODO: Implementar geração de PDF
+
+    toast({
+      title: "Relatório Gerado",
+      description: "O download do relatório PDF foi iniciado.",
+    });
   };
 
   const genderChartData = [
