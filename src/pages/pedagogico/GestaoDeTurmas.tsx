@@ -8,12 +8,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, ArrowLeft, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, Eye, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const turmaSchema = z.object({
@@ -21,9 +22,18 @@ const turmaSchema = z.object({
   classe: z.coerce.number().min(1).max(13),
   ano_lectivo_id: z.string().min(1, "Selecione um ano letivo"),
   capacidade: z.coerce.number().min(1).max(100).default(40),
+  director_turma_id: z.string().optional().nullable(),
 });
 
 type TurmaFormData = z.infer<typeof turmaSchema>;
+
+interface Professor {
+  id: string;
+  numero_funcionario: string;
+  profiles: {
+    nome_completo: string;
+  };
+}
 
 const GestaoDeTurmas = () => {
   const { user, loading } = useAuth();
@@ -31,6 +41,7 @@ const GestaoDeTurmas = () => {
   const { toast } = useToast();
   const [turmas, setTurmas] = useState<any[]>([]);
   const [anosLectivos, setAnosLectivos] = useState<any[]>([]);
+  const [professores, setProfessores] = useState<Professor[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTurma, setEditingTurma] = useState<any>(null);
   const [loadingData, setLoadingData] = useState(true);
@@ -42,6 +53,7 @@ const GestaoDeTurmas = () => {
       classe: 1,
       capacidade: 40,
       ano_lectivo_id: "",
+      director_turma_id: null,
     },
   });
 
@@ -60,16 +72,24 @@ const GestaoDeTurmas = () => {
   const fetchData = async () => {
     setLoadingData(true);
     try {
-      const [turmasRes, anosRes] = await Promise.all([
-        supabase.from("turmas").select("*, anos_lectivos!fk_turmas_ano_lectivo_id(ano), alunos!fk_alunos_turma(id)").order("classe", { ascending: true }),
+      const [turmasRes, anosRes, professoresRes] = await Promise.all([
+        supabase.from("turmas").select(`
+          *, 
+          anos_lectivos!fk_turmas_ano_lectivo_id(ano), 
+          alunos!fk_alunos_turma(id),
+          professores!turmas_director_turma_id_fkey(id, numero_funcionario, profiles!fk_professores_user_id(nome_completo))
+        `).order("classe", { ascending: true }),
         supabase.from("anos_lectivos").select("*").eq("activo", true),
+        supabase.from("professores").select("id, numero_funcionario, profiles!fk_professores_user_id(nome_completo)"),
       ]);
 
       if (turmasRes.error) throw turmasRes.error;
       if (anosRes.error) throw anosRes.error;
+      if (professoresRes.error) throw professoresRes.error;
 
       setTurmas(turmasRes.data || []);
       setAnosLectivos(anosRes.data || []);
+      setProfessores(professoresRes.data || []);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar dados",
@@ -88,6 +108,7 @@ const GestaoDeTurmas = () => {
         classe: data.classe,
         ano_lectivo_id: data.ano_lectivo_id,
         capacidade: data.capacidade,
+        director_turma_id: data.director_turma_id === "none" ? null : data.director_turma_id || null,
       };
 
       if (editingTurma) {
@@ -127,6 +148,7 @@ const GestaoDeTurmas = () => {
       classe: turma.classe,
       ano_lectivo_id: turma.ano_lectivo_id,
       capacidade: turma.capacidade,
+      director_turma_id: turma.director_turma_id || null,
     });
     setIsDialogOpen(true);
   };
@@ -264,6 +286,31 @@ const GestaoDeTurmas = () => {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="director_turma_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Director de Turma</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || "none"}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o director" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">Sem director</SelectItem>
+                            {professores.map((prof) => (
+                              <SelectItem key={prof.id} value={prof.id}>
+                                {prof.profiles?.nome_completo} ({prof.numero_funcionario})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <DialogFooter>
                     <Button type="submit">
                       {editingTurma ? "Atualizar" : "Criar"}
@@ -287,6 +334,7 @@ const GestaoDeTurmas = () => {
                   <TableHead>Nome</TableHead>
                   <TableHead>Classe</TableHead>
                   <TableHead>Ano Letivo</TableHead>
+                  <TableHead>Director de Turma</TableHead>
                   <TableHead>Capacidade</TableHead>
                   <TableHead>Alunos</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
@@ -295,7 +343,7 @@ const GestaoDeTurmas = () => {
               <TableBody>
                 {turmas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       Nenhuma turma registada
                     </TableCell>
                   </TableRow>
@@ -305,6 +353,16 @@ const GestaoDeTurmas = () => {
                       <TableCell className="font-medium">{turma.nome}</TableCell>
                       <TableCell>{turma.classe}ª</TableCell>
                       <TableCell>{turma.anos_lectivos?.ano}</TableCell>
+                      <TableCell>
+                        {turma.professores ? (
+                          <Badge variant="outline" className="gap-1">
+                            <Crown className="h-3 w-3" />
+                            {turma.professores.profiles?.nome_completo}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
                       <TableCell>{turma.capacidade}</TableCell>
                       <TableCell>{turma.alunos?.length || 0}</TableCell>
                       <TableCell className="text-right space-x-2">

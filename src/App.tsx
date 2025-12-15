@@ -21,6 +21,7 @@ import LancamentoNotas from "./pages/pedagogico/LancamentoNotas";
 import RelatoriosPedagogicos from "./pages/pedagogico/RelatoriosPedagogicos";
 import Aprovacoes from "./pages/pedagogico/Aprovacoes";
 import GestaoExames from "./pages/pedagogico/GestaoExames";
+import GestaoTrimestres from "./pages/pedagogico/GestaoTrimestres";
 import GestaoProfessores from "./pages/GestaoProfessores";
 import GestaoAlunos from "./pages/GestaoAlunos";
 import GestaoFinanceira from "./pages/GestaoFinanceira";
@@ -59,9 +60,10 @@ const App = () => (
             <Route path="/pedagogico/relatorios" element={<RelatoriosPedagogicos />} />
             <Route path="/pedagogico/aprovacoes" element={<Aprovacoes />} />
             <Route path="/pedagogico/gestao-exames" element={<GestaoExames />} />
+            <Route path="/pedagogico/gestao-trimestres" element={<GestaoTrimestres />} />
             <Route path="/aluno" element={<Aluno />} />
             <Route path="/professor" element={<Professor />} />
-            <Route path="/professor/director-turma" element={<DirectorTurma />} />
+            <Route path="/director-turma" element={<DirectorTurma />} />
             <Route path="/administrativo/gestao-professores" element={<GestaoProfessores />} />
             <Route path="/administrativo/gestao-alunos" element={<GestaoAlunos />} />
             <Route path="/administrativo/gestao-financeira" element={<GestaoFinanceira />} />

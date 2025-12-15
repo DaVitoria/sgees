@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,8 @@ interface AlunoStats {
 const DirectorTurma = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const turmaIdParam = searchParams.get("turma");
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [turma, setTurma] = useState<TurmaInfo | null>(null);
@@ -59,7 +61,7 @@ const DirectorTurma = () => {
     if (user) {
       fetchDirectorTurmaData();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, turmaIdParam]);
 
   const fetchDirectorTurmaData = async () => {
     try {
@@ -80,12 +82,17 @@ const DirectorTurma = () => {
         return;
       }
 
-      // Buscar turma onde é director
-      const { data: turmaData } = await supabase
+      // Buscar turma onde é director (usando o param ou a primeira turma)
+      let turmaQuery = supabase
         .from("turmas")
         .select("id, nome, classe")
-        .eq("director_turma_id", professorData.id)
-        .maybeSingle();
+        .eq("director_turma_id", professorData.id);
+      
+      if (turmaIdParam) {
+        turmaQuery = turmaQuery.eq("id", turmaIdParam);
+      }
+      
+      const { data: turmaData } = await turmaQuery.maybeSingle();
 
       if (!turmaData) {
         toast({

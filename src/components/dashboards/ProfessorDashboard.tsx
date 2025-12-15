@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Users, ClipboardList, TrendingUp } from "lucide-react";
+import { BookOpen, Users, ClipboardList, TrendingUp, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts";
+
+interface DirectorTurmaInfo {
+  turma_id: string;
+  turma_nome: string;
+  classe: number;
+}
 
 export const ProfessorDashboard = () => {
   const navigate = useNavigate();
@@ -19,6 +25,7 @@ export const ProfessorDashboard = () => {
   const [turmas, setTurmas] = useState<any[]>([]);
   const [performanceData, setPerformanceData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [directorTurmas, setDirectorTurmas] = useState<DirectorTurmaInfo[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -38,6 +45,22 @@ export const ProfessorDashboard = () => {
       if (!professorData) {
         setLoading(false);
         return;
+      }
+
+      // Verificar se é director de turma
+      const { data: directorData } = await supabase
+        .from("turmas")
+        .select("id, nome, classe")
+        .eq("director_turma_id", professorData.id);
+
+      if (directorData && directorData.length > 0) {
+        setDirectorTurmas(
+          directorData.map((t) => ({
+            turma_id: t.id,
+            turma_nome: t.nome,
+            classe: t.classe,
+          }))
+        );
       }
 
       // Buscar atribuições do professor
@@ -223,6 +246,34 @@ export const ProfessorDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {directorTurmas.length > 0 && (
+        <Card className="p-6 border-2 border-primary/20 bg-primary/5">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">Director de Turma</h3>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {directorTurmas.map((dt) => (
+              <Card key={dt.turma_id} className="p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">{dt.classe}ª Classe - {dt.turma_nome}</h4>
+                    <p className="text-sm text-muted-foreground">Turma sob sua direcção</p>
+                  </div>
+                  <Button 
+                    onClick={() => navigate(`/director-turma?turma=${dt.turma_id}`)}
+                  >
+                    Gerir Turma
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card className="p-6">
         <div className="flex justify-between items-center mb-4">

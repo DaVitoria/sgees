@@ -27,6 +27,15 @@ const Pedagogico = () => {
       allowedRoles: ["admin", "funcionario", "secretario"],
     },
     {
+      title: "Gestão de Trimestres",
+      description: "Configurar datas e bloquear trimestres",
+      icon: Calendar,
+      color: "text-accent",
+      bgColor: "bg-accent/10",
+      route: "/pedagogico/gestao-trimestres",
+      allowedRoles: ["admin", "secretario"],
+    },
+    {
       title: "Atribuição de Disciplinas",
       description: "Atribuir professores às disciplinas e turmas",
       icon: Calendar,
