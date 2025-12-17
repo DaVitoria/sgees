@@ -567,8 +567,14 @@ const LancamentoNotas = () => {
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(nota)}>
-                            <Pencil className="h-4 w-4" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleEdit(nota)}
+                            disabled={trimestreBloqueado}
+                            title={trimestreBloqueado ? "Trimestre bloqueado" : "Editar nota"}
+                          >
+                            {trimestreBloqueado ? <Lock className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
                           </Button>
                         </TableCell>
                       </TableRow>
