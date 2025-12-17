@@ -136,16 +136,14 @@ const LancamentoNotas = () => {
     return Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100;
   };
 
-  // Calcular MT (Média Trimestral) = MAS * 0.4 + AT * 0.6
+  // Calcular MT (Média Trimestral) = (2 * MAS + AT) / 3
   const calcularMT = (mas: number | null, at: number | null) => {
     if (mas === null && at === null) return null;
-    const masValue = mas || 0;
-    const atValue = at || 0;
     // Se apenas MAS, MT = MAS
     // Se apenas AT, MT = AT
-    // Se ambos, MT = MAS * 0.4 + AT * 0.6
+    // Se ambos, MT = (2 * MAS + AT) / 3
     if (mas !== null && at !== null) {
-      return Math.round((masValue * 0.4 + atValue * 0.6) * 100) / 100;
+      return Math.round(((2 * mas + at) / 3) * 100) / 100;
     }
     return mas !== null ? mas : at;
   };
