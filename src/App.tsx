@@ -22,6 +22,7 @@ import RelatoriosPedagogicos from "./pages/pedagogico/RelatoriosPedagogicos";
 import Aprovacoes from "./pages/pedagogico/Aprovacoes";
 import GestaoExames from "./pages/pedagogico/GestaoExames";
 import GestaoTrimestres from "./pages/pedagogico/GestaoTrimestres";
+import GestaoDisciplinas from "./pages/pedagogico/GestaoDisciplinas";
 import GestaoProfessores from "./pages/GestaoProfessores";
 import GestaoAlunos from "./pages/GestaoAlunos";
 import GestaoFinanceira from "./pages/GestaoFinanceira";
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="/pedagogico/aprovacoes" element={<Aprovacoes />} />
             <Route path="/pedagogico/gestao-exames" element={<GestaoExames />} />
             <Route path="/pedagogico/gestao-trimestres" element={<GestaoTrimestres />} />
+            <Route path="/pedagogico/gestao-disciplinas" element={<GestaoDisciplinas />} />
             <Route path="/aluno" element={<Aluno />} />
             <Route path="/professor" element={<Professor />} />
             <Route path="/director-turma" element={<DirectorTurma />} />

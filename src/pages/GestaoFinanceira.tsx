@@ -83,24 +83,34 @@ interface Aluno {
 }
 
 const categoriasEntrada = [
-  "propinas",
-  "matriculas",
-  "taxas_exame",
+  "matricula",
+  "mensalidade",
+  "contribuicao",
   "servicos",
-  "doacoes",
-  "eventos",
+  "producao_escolar",
   "outros",
 ];
 
 const categoriasSaida = [
-  "salarios",
   "manutencao",
-  "material_escolar",
-  "agua_luz",
-  "limpeza",
+  "materiais",
   "eventos",
+  "pagamentos",
   "outros",
 ];
+
+const categoriaLabels: Record<string, string> = {
+  matricula: "Matrícula",
+  mensalidade: "Mensalidade",
+  contribuicao: "Contribuição",
+  servicos: "Serviços",
+  producao_escolar: "Produção Escolar",
+  manutencao: "Manutenção",
+  materiais: "Materiais",
+  eventos: "Eventos",
+  pagamentos: "Pagamentos",
+  outros: "Outros",
+};
 
 const GestaoFinanceira = () => {
   const { user, loading, userRole } = useAuth();
@@ -421,13 +431,13 @@ const GestaoFinanceira = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todas</SelectItem>
-                    <SelectItem value="propinas">Propinas</SelectItem>
-                    <SelectItem value="matriculas">Matrículas</SelectItem>
-                    <SelectItem value="taxas_exame">Taxas de Exame</SelectItem>
-                    <SelectItem value="salarios">Salários</SelectItem>
-                    <SelectItem value="manutencao">Manutenção</SelectItem>
-                    <SelectItem value="material_escolar">Material Escolar</SelectItem>
-                    <SelectItem value="outros">Outros</SelectItem>
+                    {[...categoriasEntrada, ...categoriasSaida]
+                      .filter((cat, index, arr) => arr.indexOf(cat) === index)
+                      .map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {categoriaLabels[cat] || cat}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -477,8 +487,8 @@ const GestaoFinanceira = () => {
                             {transacao.tipo === 'entrada' ? 'Entrada' : 'Saída'}
                           </span>
                         </TableCell>
-                        <TableCell className="capitalize">
-                          {transacao.categoria.replace(/_/g, ' ')}
+                        <TableCell>
+                          {categoriaLabels[transacao.categoria] || transacao.categoria}
                         </TableCell>
                         <TableCell className="max-w-xs truncate">
                           {transacao.descricao}
@@ -556,7 +566,7 @@ const GestaoFinanceira = () => {
                       <SelectContent>
                         {(formData.tipo === "entrada" ? categoriasEntrada : categoriasSaida).map((cat) => (
                           <SelectItem key={cat} value={cat}>
-                            {cat.replace(/_/g, ' ').charAt(0).toUpperCase() + cat.replace(/_/g, ' ').slice(1)}
+                            {categoriaLabels[cat] || cat}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -602,7 +612,7 @@ const GestaoFinanceira = () => {
                   {errors.descricao && <p className="text-sm text-destructive mt-1">{errors.descricao}</p>}
                 </div>
 
-                {formData.tipo === "entrada" && ["propinas", "matriculas", "taxas_exame"].includes(formData.categoria) && (
+                {formData.tipo === "entrada" && ["matricula", "mensalidade"].includes(formData.categoria) && (
                   <div>
                     <Label htmlFor="aluno_id">Aluno (opcional)</Label>
                     <Select 

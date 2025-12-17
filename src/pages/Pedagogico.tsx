@@ -27,6 +27,15 @@ const Pedagogico = () => {
       allowedRoles: ["admin", "funcionario", "secretario"],
     },
     {
+      title: "Gestão de Disciplinas",
+      description: "Gerir disciplinas do currículo escolar",
+      icon: BookOpen,
+      color: "text-secondary",
+      bgColor: "bg-secondary/10",
+      route: "/pedagogico/gestao-disciplinas",
+      allowedRoles: ["admin", "secretario"],
+    },
+    {
       title: "Gestão de Trimestres",
       description: "Configurar datas e bloquear trimestres",
       icon: Calendar,
