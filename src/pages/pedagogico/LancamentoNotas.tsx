@@ -14,7 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Pencil, ArrowLeft, Calculator, Lock } from "lucide-react";
+import { Plus, Pencil, ArrowLeft, Calculator, Lock, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 
@@ -520,6 +521,16 @@ const LancamentoNotas = () => {
             </Button>
           ))}
         </div>
+
+        {trimestreBloqueado && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Trimestre Bloqueado</AlertTitle>
+            <AlertDescription>
+              O {selectedTrimestre}º trimestre está bloqueado. Não é possível lançar ou editar notas.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Card>
           <CardHeader>
