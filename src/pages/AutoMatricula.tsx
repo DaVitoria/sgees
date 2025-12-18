@@ -208,7 +208,7 @@ const AutoMatricula = () => {
           ano_lectivo_id: formData.ano_lectivo_id,
           data_matricula: format(new Date(), "yyyy-MM-dd"),
           status: "pendente",
-          estado: "pendente",
+          estado: "activo",
           observacoes: `Classe desejada: ${formData.classe}ª. ${formData.observacoes || ""}`,
         });
 
