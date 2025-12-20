@@ -129,7 +129,22 @@ const AtribuicaoDisciplinas = () => {
 
       const { error } = await supabase.from("professor_disciplinas").insert([atribuicaoData]);
 
-      if (error) throw error;
+      if (error) {
+        // Check for unique constraint violation (duplicate assignment)
+        if (error.code === "23505" || error.message?.includes("unique_professor_disciplina_turma_ano")) {
+          const professor = professores.find(p => p.id === data.professor_id);
+          const disciplina = disciplinas.find(d => d.id === data.disciplina_id);
+          const turma = turmas.find(t => t.id === data.turma_id);
+          
+          toast({
+            title: "Atribuição duplicada",
+            description: `O professor ${professor?.profiles?.nome_completo || ""} já está atribuído à disciplina ${disciplina?.nome || ""} na turma ${turma?.nome || ""} para este ano letivo.`,
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({ title: "Disciplina atribuída com sucesso!" });
       setIsDialogOpen(false);
