@@ -88,17 +88,17 @@ export const generateBoletimPDF = (data: BoletimData) => {
       nota.nota_as1?.toFixed(1) || "-",
       nota.nota_as2?.toFixed(1) || "-",
       nota.nota_as3?.toFixed(1) || "-",
-      nota.media_as?.toFixed(2) || "-",
+      nota.media_as !== null ? Math.ceil(nota.media_as).toString() : "-",
       nota.nota_at?.toFixed(1) || "-",
-      nota.media_trimestral?.toFixed(2) || "-",
+      nota.media_trimestral !== null ? Math.ceil(nota.media_trimestral).toString() : "-",
     ]);
     
-    // Calculate trimester average
+    // Calculate trimester average (ceiling to integer)
     const mediasTrimestrais = trimestreNotas
       .map(n => n.media_trimestral)
       .filter((m): m is number => m !== null);
     const mediaTrimestre = mediasTrimestrais.length > 0 
-      ? (mediasTrimestrais.reduce((a, b) => a + b, 0) / mediasTrimestrais.length).toFixed(2)
+      ? Math.ceil(mediasTrimestrais.reduce((a, b) => a + b, 0) / mediasTrimestrais.length).toString()
       : "-";
     
     autoTable(doc, {
@@ -153,7 +153,7 @@ export const generateBoletimPDF = (data: BoletimData) => {
     
     doc.setTextColor(255);
     doc.text("MÉDIA ANUAL (MA):", 20, boxY + 10);
-    doc.text(data.mediaAnual.toFixed(2), pageWidth - 30, boxY + 10);
+    doc.text(Math.ceil(data.mediaAnual).toString(), pageWidth - 30, boxY + 10);
     
     // Status
     doc.setTextColor(0);

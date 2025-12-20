@@ -130,21 +130,22 @@ const LancamentoNotas = () => {
     }
   };
 
-  // Calcular MAS (Média das Avaliações Sistemáticas)
+  // Calcular MAS (Média das Avaliações Sistemáticas) - arredondado por excesso para inteiro
   const calcularMAS = (as1: number | null, as2: number | null, as3: number | null) => {
     const values = [as1, as2, as3].filter((v) => v !== null) as number[];
     if (values.length === 0) return null;
-    return Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 100) / 100;
+    const media = values.reduce((a, b) => a + b, 0) / values.length;
+    return Math.ceil(media);
   };
 
-  // Calcular MT (Média Trimestral) = (2 * MAS + AT) / 3
+  // Calcular MT (Média Trimestral) = (2 * MAS + AT) / 3 - arredondado por excesso para inteiro
   const calcularMT = (mas: number | null, at: number | null) => {
     if (mas === null && at === null) return null;
     // Se apenas MAS, MT = MAS
     // Se apenas AT, MT = AT
     // Se ambos, MT = (2 * MAS + AT) / 3
     if (mas !== null && at !== null) {
-      return Math.round(((2 * mas + at) / 3) * 100) / 100;
+      return Math.ceil((2 * mas + at) / 3);
     }
     return mas !== null ? mas : at;
   };
