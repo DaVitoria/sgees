@@ -1049,10 +1049,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      assign_admin_role_by_email: {
-        Args: { admin_email: string }
-        Returns: undefined
-      }
       calcular_media_anual: {
         Args: {
           p_aluno_id: string
