@@ -32,12 +32,9 @@ interface InventarioItem {
   created_at: string | null;
 }
 
-interface Funcionario {
-  id: string;
+interface Responsavel {
   user_id: string;
-  profiles: {
-    nome_completo: string;
-  } | null;
+  nome_completo: string;
 }
 
 const CATEGORIAS = [
@@ -65,7 +62,7 @@ const Inventario = () => {
   const { toast } = useToast();
 
   const [items, setItems] = useState<InventarioItem[]>([]);
-  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+  const [responsaveis, setResponsaveis] = useState<Responsavel[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategoria, setFilterCategoria] = useState<string>("todas");
@@ -100,25 +97,43 @@ const Inventario = () => {
   const fetchData = async () => {
     setLoadingData(true);
     try {
-      const [itemsRes, funcionariosRes] = await Promise.all([
-        supabase
-          .from("inventario")
-          .select("*")
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("funcionarios")
-          .select(`
-            id,
-            user_id,
-            profiles:user_id (nome_completo)
-          `)
-      ]);
+      // Fetch inventory items
+      const itemsRes = await supabase
+        .from("inventario")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (itemsRes.error) throw itemsRes.error;
-      if (funcionariosRes.error) throw funcionariosRes.error;
+
+      // Fetch users with roles 'secretario' or 'funcionario'
+      const rolesRes = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("role", ["secretario", "funcionario"]);
+
+      if (rolesRes.error) throw rolesRes.error;
+
+      // Get unique user IDs
+      const userIds = [...new Set(rolesRes.data?.map(r => r.user_id) || [])];
+
+      // Fetch profiles for these users
+      let responsaveisData: Responsavel[] = [];
+      if (userIds.length > 0) {
+        const profilesRes = await supabase
+          .from("profiles")
+          .select("id, nome_completo")
+          .in("id", userIds);
+
+        if (profilesRes.error) throw profilesRes.error;
+
+        responsaveisData = (profilesRes.data || []).map(p => ({
+          user_id: p.id,
+          nome_completo: p.nome_completo
+        }));
+      }
 
       setItems(itemsRes.data || []);
-      setFuncionarios(funcionariosRes.data as Funcionario[] || []);
+      setResponsaveis(responsaveisData);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar dados",
@@ -274,8 +289,8 @@ const Inventario = () => {
 
   const getResponsavelNome = (responsavelId: string | null) => {
     if (!responsavelId) return "-";
-    const funcionario = funcionarios.find(f => f.id === responsavelId);
-    return funcionario?.profiles?.nome_completo || "-";
+    const responsavel = responsaveis.find(r => r.user_id === responsavelId);
+    return responsavel?.nome_completo || "-";
   };
 
   if (loading || loadingData) {
@@ -427,9 +442,9 @@ const Inventario = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Nenhum</SelectItem>
-                      {funcionarios.map((func) => (
-                        <SelectItem key={func.id} value={func.id}>
-                          {func.profiles?.nome_completo || "Funcionário"}
+                      {responsaveis.map((resp) => (
+                        <SelectItem key={resp.user_id} value={resp.user_id}>
+                          {resp.nome_completo}
                         </SelectItem>
                       ))}
                     </SelectContent>
