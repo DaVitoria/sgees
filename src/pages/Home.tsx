@@ -175,33 +175,33 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative gradient-primary text-white py-20 px-4">
+      <section className="relative gradient-primary text-white py-10 sm:py-16 lg:py-20 px-4">
         <div className="container mx-auto max-w-6xl">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="flex-1 space-y-6">
-              <div className="inline-block p-4 rounded-2xl bg-white/10 backdrop-blur">
-                <GraduationCap className="h-16 w-16" />
+          <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-8">
+            <div className="flex-1 space-y-4 sm:space-y-6 text-center lg:text-left">
+              <div className="inline-block p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur">
+                <GraduationCap className="h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16" />
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">Bem-vindo à Nossa Escola Secundária</h1>
-              <p className="text-lg text-white/90">Construindo o futuro de Moçambique através da educação de excelência.</p>
-              <div className="flex flex-wrap gap-4">
-                <Button size="lg" variant="secondary" onClick={() => navigate("/login")}>Aceder ao Sistema</Button>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">Bem-vindo à Nossa Escola Secundária</h1>
+              <p className="text-sm sm:text-base lg:text-lg text-white/90">Construindo o futuro de Moçambique através da educação de excelência.</p>
+              <div className="flex flex-wrap gap-3 sm:gap-4 justify-center lg:justify-start">
+                <Button size="lg" variant="secondary" onClick={() => navigate("/login")} className="text-sm sm:text-base">Aceder ao Sistema</Button>
               </div>
             </div>
-            <div className="flex-1">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="flex-1 w-full max-w-md lg:max-w-none">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 {heroStats.map((stat) => {
                   const Icon = stat.icon;
                   return (
                     <Card key={stat.label} className="bg-white/10 backdrop-blur border-white/20 text-white">
-                      <CardContent className="p-6 text-center">
-                        <Icon className="h-8 w-8 mx-auto mb-2" />
+                      <CardContent className="p-3 sm:p-4 lg:p-6 text-center">
+                        <Icon className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mx-auto mb-1 sm:mb-2" />
                         {loading ? (
-                          <Skeleton className="h-8 w-16 mx-auto mb-1 bg-white/20" />
+                          <Skeleton className="h-6 sm:h-8 w-12 sm:w-16 mx-auto mb-1 bg-white/20" />
                         ) : (
-                          <div className="text-3xl font-bold mb-1">{stat.value}</div>
+                          <div className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1">{stat.value}</div>
                         )}
-                        <div className="text-sm text-white/80">{stat.label}</div>
+                        <div className="text-[10px] sm:text-xs lg:text-sm text-white/80">{stat.label}</div>
                       </CardContent>
                     </Card>
                   );
@@ -213,58 +213,58 @@ const Home = () => {
       </section>
 
       {/* Members Summary Section */}
-      <section className="py-16 px-4 bg-muted/30">
+      <section className="py-10 sm:py-12 lg:py-16 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">Membros da Escola</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2 sm:mb-4">Membros da Escola</h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
               Nossa comunidade escolar é composta por profissionais dedicados e alunos comprometidos com a excelência.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto rounded-full gradient-primary flex items-center justify-center mb-4">
-                  <Users className="h-8 w-8 text-white" />
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full gradient-primary flex items-center justify-center mb-3 sm:mb-4">
+                  <Users className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
                 {loading ? (
-                  <Skeleton className="h-10 w-20 mx-auto mb-2" />
+                  <Skeleton className="h-8 sm:h-10 w-16 sm:w-20 mx-auto mb-2" />
                 ) : (
-                  <div className="text-4xl font-bold text-primary mb-2">{stats?.total_alunos || 0}</div>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-1 sm:mb-2">{stats?.total_alunos || 0}</div>
                 )}
-                <div className="text-lg font-semibold text-foreground">Alunos</div>
-                <p className="text-sm text-muted-foreground mt-2">Estudantes activos matriculados</p>
+                <div className="text-base sm:text-lg font-semibold text-foreground">Alunos</div>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">Estudantes activos matriculados</p>
               </CardContent>
             </Card>
 
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto rounded-full gradient-accent flex items-center justify-center mb-4">
-                  <GraduationCap className="h-8 w-8 text-white" />
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full gradient-accent flex items-center justify-center mb-3 sm:mb-4">
+                  <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
                 {loading ? (
-                  <Skeleton className="h-10 w-20 mx-auto mb-2" />
+                  <Skeleton className="h-8 sm:h-10 w-16 sm:w-20 mx-auto mb-2" />
                 ) : (
-                  <div className="text-4xl font-bold text-primary mb-2">{stats?.total_professores || 0}</div>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-1 sm:mb-2">{stats?.total_professores || 0}</div>
                 )}
-                <div className="text-lg font-semibold text-foreground">Professores</div>
-                <p className="text-sm text-muted-foreground mt-2">Docentes qualificados</p>
+                <div className="text-base sm:text-lg font-semibold text-foreground">Professores</div>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">Docentes qualificados</p>
               </CardContent>
             </Card>
 
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent className="p-6 text-center">
-                <div className="w-16 h-16 mx-auto rounded-full bg-amber-500 flex items-center justify-center mb-4">
-                  <UserCircle className="h-8 w-8 text-white" />
+              <CardContent className="p-4 sm:p-6 text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full bg-amber-500 flex items-center justify-center mb-3 sm:mb-4">
+                  <UserCircle className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
                 {loading ? (
-                  <Skeleton className="h-10 w-20 mx-auto mb-2" />
+                  <Skeleton className="h-8 sm:h-10 w-16 sm:w-20 mx-auto mb-2" />
                 ) : (
-                  <div className="text-4xl font-bold text-primary mb-2">{stats?.total_funcionarios || 0}</div>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-1 sm:mb-2">{stats?.total_funcionarios || 0}</div>
                 )}
-                <div className="text-lg font-semibold text-foreground">Funcionários</div>
-                <p className="text-sm text-muted-foreground mt-2">Equipa administrativa e apoio</p>
+                <div className="text-base sm:text-lg font-semibold text-foreground">Funcionários</div>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 sm:mt-2">Equipa administrativa e apoio</p>
               </CardContent>
             </Card>
           </div>
@@ -272,36 +272,38 @@ const Home = () => {
       </section>
 
       {/* Financial Summary Section */}
-      <section className="py-16 px-4 bg-background">
+      <section className="py-10 sm:py-12 lg:py-16 px-4 bg-background">
         <div className="container mx-auto max-w-6xl">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
-            <div className="text-center md:text-left mb-4 md:mb-0">
-              <h2 className="text-3xl font-bold text-foreground mb-2">Situação Financeira</h2>
-              <p className="text-muted-foreground max-w-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 sm:mb-10 lg:mb-12">
+            <div className="text-center sm:text-left">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-1 sm:mb-2">Situação Financeira</h2>
+              <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
                 Transparência na gestão dos recursos financeiros da nossa instituição.
               </p>
             </div>
             <Button 
               onClick={handleExportPDF}
               disabled={loading || !financialSummary}
-              className="gap-2"
+              className="gap-2 text-sm sm:text-base"
+              size="sm"
             >
               <FileDown className="h-4 w-4" />
-              Exportar Relatório PDF
+              <span className="hidden sm:inline">Exportar Relatório PDF</span>
+              <span className="sm:hidden">Exportar PDF</span>
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             <Card className="border-l-4 border-l-green-500">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-muted-foreground">Saldo Actual</span>
-                  <Wallet className="h-5 w-5 text-green-500" />
+              <CardContent className="p-3 sm:p-4 lg:p-6">
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">Saldo Actual</span>
+                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                 </div>
                 {loading ? (
-                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-6 sm:h-8 w-20 sm:w-32" />
                 ) : (
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-sm sm:text-lg lg:text-2xl font-bold text-green-600 truncate">
                     {formatCurrency(financialSummary?.saldo_actual || 0)}
                   </div>
                 )}
@@ -309,15 +311,15 @@ const Home = () => {
             </Card>
 
             <Card className="border-l-4 border-l-blue-500">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-muted-foreground">Total Entradas</span>
-                  <ArrowUpCircle className="h-5 w-5 text-blue-500" />
+              <CardContent className="p-3 sm:p-4 lg:p-6">
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">Total Entradas</span>
+                  <ArrowUpCircle className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                 </div>
                 {loading ? (
-                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-6 sm:h-8 w-20 sm:w-32" />
                 ) : (
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-sm sm:text-lg lg:text-2xl font-bold text-blue-600 truncate">
                     {formatCurrency(financialSummary?.total_entradas || 0)}
                   </div>
                 )}
@@ -325,15 +327,15 @@ const Home = () => {
             </Card>
 
             <Card className="border-l-4 border-l-red-500">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-muted-foreground">Total Saídas</span>
-                  <ArrowDownCircle className="h-5 w-5 text-red-500" />
+              <CardContent className="p-3 sm:p-4 lg:p-6">
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">Total Saídas</span>
+                  <ArrowDownCircle className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
                 </div>
                 {loading ? (
-                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-6 sm:h-8 w-20 sm:w-32" />
                 ) : (
-                  <div className="text-2xl font-bold text-red-600">
+                  <div className="text-sm sm:text-lg lg:text-2xl font-bold text-red-600 truncate">
                     {formatCurrency(financialSummary?.total_saidas || 0)}
                   </div>
                 )}
@@ -341,15 +343,15 @@ const Home = () => {
             </Card>
 
             <Card className="border-l-4 border-l-amber-500">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-muted-foreground">Entradas (Mês)</span>
-                  <DollarSign className="h-5 w-5 text-amber-500" />
+              <CardContent className="p-3 sm:p-4 lg:p-6">
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground">Entradas (Mês)</span>
+                  <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
                 </div>
                 {loading ? (
-                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-6 sm:h-8 w-20 sm:w-32" />
                 ) : (
-                  <div className="text-2xl font-bold text-amber-600">
+                  <div className="text-sm sm:text-lg lg:text-2xl font-bold text-amber-600 truncate">
                     {formatCurrency(financialSummary?.entradas_mes_actual || 0)}
                   </div>
                 )}
@@ -359,29 +361,30 @@ const Home = () => {
 
           {/* Financial Charts */}
           {monthlyFinancial.length > 0 && (
-            <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="mt-6 sm:mt-8 lg:mt-12 grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               {/* Bar Chart - Monthly Comparison */}
               <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-lg">Comparativo Mensal</CardTitle>
-                  <CardDescription>Entradas vs Saídas nos últimos 12 meses</CardDescription>
+                <CardHeader className="pb-2 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg">Comparativo Mensal</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Entradas vs Saídas nos últimos 12 meses</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-2 sm:p-6">
                   {loading ? (
-                    <Skeleton className="h-[300px] w-full" />
+                    <Skeleton className="h-[200px] sm:h-[300px] w-full" />
                   ) : (
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={200} className="sm:!h-[300px]">
                       <BarChart data={monthlyFinancial}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis 
                           dataKey="mes" 
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 10 }}
                           className="fill-muted-foreground"
                         />
                         <YAxis 
                           tickFormatter={(value) => formatCurrencyShort(value)}
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 10 }}
                           className="fill-muted-foreground"
+                          width={45}
                         />
                         <Tooltip 
                           formatter={(value: number) => formatCurrency(value)}
@@ -389,10 +392,11 @@ const Home = () => {
                           contentStyle={{
                             backgroundColor: 'hsl(var(--card))',
                             border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px'
+                            borderRadius: '8px',
+                            fontSize: '12px'
                           }}
                         />
-                        <Legend />
+                        <Legend wrapperStyle={{ fontSize: '11px' }} />
                         <Bar 
                           dataKey="entradas" 
                           name="Entradas" 
@@ -413,15 +417,15 @@ const Home = () => {
 
               {/* Area Chart - Balance Evolution */}
               <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-lg">Evolução do Saldo</CardTitle>
-                  <CardDescription>Saldo mensal ao longo do tempo</CardDescription>
+                <CardHeader className="pb-2 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg">Evolução do Saldo</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Saldo mensal ao longo do tempo</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-2 sm:p-6">
                   {loading ? (
-                    <Skeleton className="h-[300px] w-full" />
+                    <Skeleton className="h-[200px] sm:h-[300px] w-full" />
                   ) : (
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={200} className="sm:!h-[300px]">
                       <AreaChart data={monthlyFinancial}>
                         <defs>
                           <linearGradient id="colorSaldo" x1="0" y1="0" x2="0" y2="1">
@@ -432,13 +436,14 @@ const Home = () => {
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis 
                           dataKey="mes" 
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 10 }}
                           className="fill-muted-foreground"
                         />
                         <YAxis 
                           tickFormatter={(value) => formatCurrencyShort(value)}
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 10 }}
                           className="fill-muted-foreground"
+                          width={45}
                         />
                         <Tooltip 
                           formatter={(value: number) => formatCurrency(value)}
@@ -446,7 +451,8 @@ const Home = () => {
                           contentStyle={{
                             backgroundColor: 'hsl(var(--card))',
                             border: '1px solid hsl(var(--border))',
-                            borderRadius: '8px'
+                            borderRadius: '8px',
+                            fontSize: '12px'
                           }}
                         />
                         <Area 

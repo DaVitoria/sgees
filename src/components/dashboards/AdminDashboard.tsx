@@ -157,37 +157,37 @@ export const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Dashboard Administrativo</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">Dashboard Administrativo</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Visão geral completa da escola
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 lg:gap-6 grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat, index) => (
-          <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.title}</p>
-                <p className="text-3xl font-bold mt-2">{stat.value}</p>
+          <Card key={index} className="p-3 sm:p-4 lg:p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">{stat.title}</p>
+                <p className="text-lg sm:text-2xl lg:text-3xl font-bold mt-1 sm:mt-2 truncate">{stat.value}</p>
               </div>
-              <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                <stat.icon className={`h-8 w-8 ${stat.color}`} />
+              <div className={`${stat.bgColor} p-2 sm:p-3 rounded-lg flex-shrink-0`}>
+                <stat.icon className={`h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 ${stat.color}`} />
               </div>
             </div>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Distribuição de Alunos por Classe</CardTitle>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg">Distribuição de Alunos por Classe</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="p-2 sm:p-6">
+            <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
               <PieChart>
                 <Pie
                   data={chartData}
@@ -195,7 +195,7 @@ export const AdminDashboard = () => {
                   cy="50%"
                   labelLine={false}
                   label={({ classe, total }) => `${classe}: ${total}`}
-                  outerRadius={80}
+                  outerRadius={60}
                   fill="#8884d8"
                   dataKey="total"
                 >
@@ -210,15 +210,15 @@ export const AdminDashboard = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Alunos por Turma</CardTitle>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg">Alunos por Turma</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+          <CardContent className="p-2 sm:p-6">
+            <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
               <BarChart data={turmaData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="nome" />
-                <YAxis />
+                <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
                 <Bar dataKey="alunos" fill="#3b82f6" />
               </BarChart>
@@ -228,17 +228,17 @@ export const AdminDashboard = () => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Visão Financeira por Categoria</CardTitle>
+        <CardHeader className="pb-2 sm:pb-4">
+          <CardTitle className="text-base sm:text-lg">Visão Financeira por Categoria</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
+        <CardContent className="p-2 sm:p-6">
+          <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
             <BarChart data={financeData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="categoria" />
-              <YAxis />
+              <XAxis dataKey="categoria" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+              <YAxis tick={{ fontSize: 11 }} />
               <Tooltip formatter={(value) => `${Number(value).toLocaleString()} MZN`} />
-              <Legend />
+              <Legend wrapperStyle={{ fontSize: '12px' }} />
               <Bar dataKey="entrada" fill="#10b981" name="Entradas" />
               <Bar dataKey="saida" fill="#ef4444" name="Saídas" />
             </BarChart>
