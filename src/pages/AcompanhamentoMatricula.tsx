@@ -54,12 +54,13 @@ export default function AcompanhamentoMatricula() {
         .from("alunos")
         .select("id")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (alunoError) throw alunoError;
 
       if (!alunoData) {
-        toast.error("Dados do aluno não encontrados");
+        // Aluno ainda não tem registo - mostra estado sem matrícula
+        setMatricula(null);
         return;
       }
 
@@ -73,20 +74,20 @@ export default function AcompanhamentoMatricula() {
           estado,
           observacoes,
           turma_id,
-          turmas!turma_id (
+          turmas!fk_matriculas_turma_id (
             nome,
             classe
           ),
-          anos_lectivos!ano_lectivo_id (
+          anos_lectivos!fk_matriculas_ano_lectivo_id (
             ano
           )
         `)
         .eq("aluno_id", alunoData.id)
         .order("created_at", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") throw error;
+      if (error) throw error;
 
       setMatricula(data);
     } catch (error) {
