@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, TrendingUp, TrendingDown, Users, BookOpen } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Users, BookOpen, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { exportToExcel } from "@/utils/exportToExcel";
 
 const RelatoriosPedagogicos = () => {
   const { user, loading } = useAuth();
@@ -137,6 +138,44 @@ const RelatoriosPedagogicos = () => {
     }
   };
 
+  const handleExportExcel = () => {
+    if (stats.disciplinas.length === 0) {
+      toast({
+        title: "Sem dados",
+        description: "Não há dados para exportar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const turmaInfo = turmas.find(t => t.id === selectedTurma);
+    const exportData = [
+      { indicador: "Total de Alunos", valor: stats.totalAlunos },
+      { indicador: "Média Geral", valor: stats.mediaGeral.toFixed(1) },
+      { indicador: "Aprovados", valor: stats.aprovados },
+      { indicador: "Reprovados", valor: stats.reprovados },
+      { indicador: "Taxa de Aprovação", valor: `${stats.totalAlunos > 0 ? ((stats.aprovados / stats.totalAlunos) * 100).toFixed(1) : 0}%` },
+      ...stats.disciplinas.map(d => ({
+        indicador: `Média - ${d.nome}`,
+        valor: d.media.toFixed(1),
+      })),
+    ];
+
+    exportToExcel(exportData, {
+      filename: `Relatorio_Pedagogico_${turmaInfo?.nome || 'Turma'}_${turmaInfo?.classe || ''}`,
+      sheetName: "Relatório",
+      columns: [
+        { header: "Indicador", key: "indicador", width: 30 },
+        { header: "Valor", key: "valor", width: 15 },
+      ],
+    });
+
+    toast({
+      title: "Exportado",
+      description: "Ficheiro Excel gerado com sucesso.",
+    });
+  };
+
   if (loading || loadingData) {
     return (
       <Layout>
@@ -150,14 +189,20 @@ const RelatoriosPedagogicos = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/pedagogico")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Relatórios Pedagógicos</h2>
-            <p className="text-muted-foreground">Visualizar estatísticas de aproveitamento</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/pedagogico")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">Relatórios Pedagógicos</h2>
+              <p className="text-muted-foreground">Visualizar estatísticas de aproveitamento</p>
+            </div>
           </div>
+          <Button onClick={handleExportExcel} disabled={stats.disciplinas.length === 0}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Exportar Excel
+          </Button>
         </div>
 
         <Card>

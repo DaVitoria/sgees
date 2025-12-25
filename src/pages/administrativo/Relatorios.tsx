@@ -10,8 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Users, GraduationCap, UserCheck, Building2, BookOpen, 
   DollarSign, TrendingUp, TrendingDown, FileDown, Calendar,
-  PieChart as PieChartIcon, BarChart3
+  PieChart as PieChartIcon, BarChart3, FileSpreadsheet
 } from "lucide-react";
+import { exportMultiSheetExcel } from "@/utils/exportToExcel";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
@@ -351,6 +352,109 @@ const Relatorios = () => {
     }
   };
 
+  const generateExcel = () => {
+    const anoLectivo = anosLectivos.find(a => a.id === selectedAno)?.ano || "";
+    
+    const sheets = [];
+
+    // Estatísticas Gerais
+    if (schoolStats) {
+      sheets.push({
+        name: "Estatísticas Gerais",
+        data: [
+          { indicador: "Total de Alunos Activos", valor: schoolStats.total_alunos },
+          { indicador: "Total de Professores", valor: schoolStats.total_professores },
+          { indicador: "Total de Funcionários", valor: schoolStats.total_funcionarios },
+          { indicador: "Total de Turmas", valor: schoolStats.total_turmas },
+          { indicador: "Total de Disciplinas", valor: schoolStats.total_disciplinas },
+        ],
+        columns: [
+          { header: "Indicador", key: "indicador", width: 30 },
+          { header: "Quantidade", key: "valor", width: 15 },
+        ],
+      });
+    }
+
+    // Alunos por Classe
+    if (alunosPorClasse.length > 0) {
+      sheets.push({
+        name: "Alunos por Classe",
+        data: alunosPorClasse.map(item => ({
+          classe: `${item.classe}ª Classe`,
+          quantidade: item.total,
+        })),
+        columns: [
+          { header: "Classe", key: "classe", width: 20 },
+          { header: "Quantidade de Alunos", key: "quantidade", width: 20 },
+        ],
+      });
+    }
+
+    // Resumo Financeiro
+    if (financialSummary) {
+      sheets.push({
+        name: "Resumo Financeiro",
+        data: [
+          { indicador: "Total de Entradas", valor: financialSummary.total_entradas.toLocaleString("pt-MZ", { minimumFractionDigits: 2 }) },
+          { indicador: "Total de Saídas", valor: financialSummary.total_saidas.toLocaleString("pt-MZ", { minimumFractionDigits: 2 }) },
+          { indicador: "Saldo Actual", valor: financialSummary.saldo_actual.toLocaleString("pt-MZ", { minimumFractionDigits: 2 }) },
+          { indicador: "Entradas do Mês", valor: financialSummary.entradas_mes_actual.toLocaleString("pt-MZ", { minimumFractionDigits: 2 }) },
+          { indicador: "Saídas do Mês", valor: financialSummary.saidas_mes_actual.toLocaleString("pt-MZ", { minimumFractionDigits: 2 }) },
+        ],
+        columns: [
+          { header: "Indicador", key: "indicador", width: 25 },
+          { header: "Valor (MZN)", key: "valor", width: 20 },
+        ],
+      });
+    }
+
+    // Alunos por Estado
+    if (alunosPorEstado.length > 0) {
+      sheets.push({
+        name: "Alunos por Estado",
+        data: alunosPorEstado.map(item => ({
+          estado: item.estado,
+          quantidade: item.total,
+        })),
+        columns: [
+          { header: "Estado", key: "estado", width: 20 },
+          { header: "Quantidade", key: "quantidade", width: 15 },
+        ],
+      });
+    }
+
+    // Matrículas por Mês
+    if (matriculasPorMes.length > 0) {
+      sheets.push({
+        name: "Matrículas por Mês",
+        data: matriculasPorMes.map(item => ({
+          mes: item.mes,
+          quantidade: item.total,
+        })),
+        columns: [
+          { header: "Mês", key: "mes", width: 15 },
+          { header: "Quantidade", key: "quantidade", width: 15 },
+        ],
+      });
+    }
+
+    if (sheets.length === 0) {
+      toast({
+        title: "Sem dados",
+        description: "Não há dados para exportar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    exportMultiSheetExcel(sheets, `Relatorio_Administrativo_${anoLectivo.replace("/", "-")}`);
+
+    toast({
+      title: "Exportado",
+      description: "Ficheiro Excel gerado com sucesso.",
+    });
+  };
+
   if (loading || loadingData) {
     return (
       <Layout>
@@ -373,7 +477,7 @@ const Relatorios = () => {
               Estatísticas gerais e indicadores da escola
             </p>
           </div>
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-wrap gap-2 items-center">
             <Select value={selectedAno} onValueChange={setSelectedAno}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Ano Lectivo" />
@@ -388,7 +492,11 @@ const Relatorios = () => {
             </Select>
             <Button onClick={generateReport} disabled={generating}>
               <FileDown className="mr-2 h-4 w-4" />
-              {generating ? "A gerar..." : "Exportar PDF"}
+              {generating ? "A gerar..." : "PDF"}
+            </Button>
+            <Button onClick={generateExcel} variant="outline">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Excel
             </Button>
           </div>
         </div>
