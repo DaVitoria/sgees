@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, AlertCircle, TrendingUp, Download, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getAlunoStatus, getStatusLabel, getStatusColors, hasExame } from "@/utils/statusHelper";
+import { exportToExcel } from "@/utils/exportToExcel";
 
 const Aprovacoes = () => {
   const { user, loading } = useAuth();
@@ -66,6 +68,10 @@ const Aprovacoes = () => {
   const fetchAprovacoes = async () => {
     setLoadingData(true);
     try {
+      // Obter a classe da turma selecionada
+      const turmaSelecionada = turmas.find(t => t.id === selectedTurma);
+      const classe = turmaSelecionada?.classe || 0;
+
       const { data: alunos, error: alunosError } = await supabase
         .from("alunos")
         .select("id, numero_matricula, user_id, profiles!fk_alunos_user(nome_completo)")
@@ -85,9 +91,8 @@ const Aprovacoes = () => {
           const medias = notas?.map((n) => n.media_trimestral).filter((m) => m !== null) as number[];
           const mediaFinal = medias.length > 0 ? medias.reduce((a, b) => a + b, 0) / medias.length : 0;
 
-          let status = "exame";
-          if (mediaFinal >= 10) status = "aprovado";
-          else if (mediaFinal < 7) status = "reprovado";
+          // Usar helper para determinar status baseado na classe
+          const status = getAlunoStatus(mediaFinal, classe);
 
           return {
             ...aluno,
@@ -115,28 +120,58 @@ const Aprovacoes = () => {
       case "aprovado":
         return <CheckCircle2 className="h-5 w-5 text-success" />;
       case "reprovado":
+      case "retido":
         return <XCircle className="h-5 w-5 text-destructive" />;
       case "exame":
         return <AlertCircle className="h-5 w-5 text-warning" />;
+      case "progride":
+        return <TrendingUp className="h-5 w-5 text-blue-500" />;
       default:
         return null;
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: any = {
-      aprovado: "default",
-      reprovado: "destructive",
-      exame: "secondary",
-    };
+    const colors = getStatusColors(status);
+    return <Badge className={colors.badge}>{getStatusLabel(status)}</Badge>;
+  };
 
-    const labels: any = {
-      aprovado: "Aprovado",
-      reprovado: "Reprovado",
-      exame: "Exame",
-    };
+  const turmaSelecionada = turmas.find(t => t.id === selectedTurma);
+  const classeTemExame = turmaSelecionada ? hasExame(turmaSelecionada.classe) : false;
 
-    return <Badge variant={variants[status]}>{labels[status]}</Badge>;
+  const handleExportExcel = () => {
+    if (aprovacoes.length === 0) {
+      toast({
+        title: "Sem dados",
+        description: "Não há dados para exportar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const turmaInfo = turmas.find(t => t.id === selectedTurma);
+    const exportData = aprovacoes.map(aluno => ({
+      matricula: aluno.numero_matricula,
+      nome: aluno.profiles?.nome_completo || '',
+      media: aluno.totalNotas > 0 ? aluno.mediaFinal.toFixed(1) : 'N/A',
+      status: getStatusLabel(aluno.status),
+    }));
+
+    exportToExcel(exportData, {
+      filename: `Aprovacoes_${turmaInfo?.nome || 'Turma'}_${turmaInfo?.classe || ''}`,
+      sheetName: "Aprovações",
+      columns: [
+        { header: "Matrícula", key: "matricula", width: 15 },
+        { header: "Nome do Aluno", key: "nome", width: 35 },
+        { header: "Média Final", key: "media", width: 12 },
+        { header: "Situação", key: "status", width: 15 },
+      ],
+    });
+
+    toast({
+      title: "Exportado",
+      description: "Ficheiro Excel gerado com sucesso.",
+    });
   };
 
   if (loading || loadingData) {
@@ -151,21 +186,28 @@ const Aprovacoes = () => {
 
   const stats = {
     aprovados: aprovacoes.filter((a) => a.status === "aprovado").length,
-    reprovados: aprovacoes.filter((a) => a.status === "reprovado").length,
+    reprovados: aprovacoes.filter((a) => a.status === "reprovado" || a.status === "retido").length,
     exames: aprovacoes.filter((a) => a.status === "exame").length,
+    progride: aprovacoes.filter((a) => a.status === "progride").length,
   };
 
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/pedagogico")}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Aprovações</h2>
-            <p className="text-muted-foreground">Gerir aprovações, reprovações e exames</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/pedagogico")}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">Aprovações</h2>
+              <p className="text-muted-foreground">Gerir aprovações, reprovações e exames</p>
+            </div>
           </div>
+          <Button onClick={handleExportExcel} disabled={aprovacoes.length === 0}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Exportar Excel
+          </Button>
         </div>
 
         <Card>
@@ -189,7 +231,7 @@ const Aprovacoes = () => {
           </CardContent>
         </Card>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className={`grid gap-6 ${classeTemExame ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
@@ -200,19 +242,31 @@ const Aprovacoes = () => {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Para Exame</CardTitle>
-              <AlertCircle className="h-4 w-4 text-warning" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-warning">{stats.exames}</div>
-            </CardContent>
-          </Card>
+          {classeTemExame ? (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Para Exame</CardTitle>
+                <AlertCircle className="h-4 w-4 text-warning" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-warning">{stats.exames}</div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Progride</CardTitle>
+                <TrendingUp className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">{stats.progride}</div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Reprovados</CardTitle>
+              <CardTitle className="text-sm font-medium">{classeTemExame ? 'Reprovados' : 'Retidos'}</CardTitle>
               <XCircle className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
@@ -225,7 +279,10 @@ const Aprovacoes = () => {
           <CardHeader>
             <CardTitle>Situação dos Alunos</CardTitle>
             <CardDescription>
-              Aprovado: Média ≥ 10 | Exame: 7 ≤ Média &lt; 10 | Reprovado: Média &lt; 7
+              {classeTemExame 
+                ? "Aprovado: Média ≥ 10 | Em Exame: 7 ≤ Média < 10 | Reprovado: Média < 7"
+                : "Aprovado: Média ≥ 10 | Progride: 7 ≤ Média < 10 | Retido: Média < 7"
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>

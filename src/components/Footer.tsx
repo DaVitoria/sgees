@@ -11,18 +11,18 @@ const Footer = () => {
           <div className="flex flex-col items-center md:items-start gap-2">
             <h4 className="font-semibold text-foreground mb-1">Contactos</h4>
             <a 
-              href="mailto:info@escola.edu.mz" 
+              href="mailto:elwork07@outlook.com" 
               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               <Mail className="h-4 w-4" />
-              info@escola.edu.mz
+              elwork07@outlook.com
             </a>
             <a 
-              href="tel:+258841234567" 
+              href="tel:+258878556700" 
               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               <Phone className="h-4 w-4" />
-              +258 84 123 4567
+              +258 87 855 6700
             </a>
           </div>
 

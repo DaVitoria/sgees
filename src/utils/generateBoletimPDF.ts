@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { hasExame } from "./statusHelper";
 
 interface NotaData {
   disciplina: string;
@@ -155,10 +156,22 @@ export const generateBoletimPDF = (data: BoletimData) => {
     doc.text("MÉDIA ANUAL (MA):", 20, boxY + 10);
     doc.text(Math.ceil(data.mediaAnual).toString(), pageWidth - 30, boxY + 10);
     
-    // Status
+    // Status - depende se a classe tem exame
     doc.setTextColor(0);
-    const status = data.mediaAnual >= 10 ? "APROVADO" : data.mediaAnual >= 7 ? "EM EXAME" : "REPROVADO";
-    const statusColor = data.mediaAnual >= 10 ? [34, 197, 94] : data.mediaAnual >= 7 ? [234, 179, 8] : [239, 68, 68];
+    const classeTemExame = hasExame(data.aluno.classe);
+    let status: string;
+    let statusColor: number[];
+    
+    if (data.mediaAnual >= 10) {
+      status = "APROVADO";
+      statusColor = [34, 197, 94];
+    } else if (data.mediaAnual >= 7) {
+      status = classeTemExame ? "EM EXAME" : "PROGRIDE";
+      statusColor = classeTemExame ? [234, 179, 8] : [59, 130, 246];
+    } else {
+      status = classeTemExame ? "REPROVADO" : "RETIDO";
+      statusColor = [239, 68, 68];
+    }
     
     doc.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
     doc.rect(14, boxY + 20, pageWidth - 28, 12, "F");

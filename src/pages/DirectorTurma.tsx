@@ -10,6 +10,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { generateTurmaReportPDF } from "@/utils/generateTurmaReportPDF";
+import { getAlunoStatus, getStatusLabel, getStatusColors, hasExame } from "@/utils/statusHelper";
+import { exportToExcel } from "@/utils/exportToExcel";
 import { 
   Users, 
   BookOpen, 
@@ -19,7 +21,8 @@ import {
   FileText,
   Award,
   BarChart3,
-  User
+  User,
+  FileSpreadsheet
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
@@ -37,7 +40,7 @@ interface AlunoStats {
   nome_completo: string;
   sexo: string | null;
   mediaGeral: number;
-  status: 'aprovado' | 'reprovado' | 'em_exame' | 'pendente';
+  status: 'aprovado' | 'reprovado' | 'em_exame' | 'pendente' | 'progride' | 'retido';
 }
 
 const DirectorTurma = () => {
@@ -167,17 +170,23 @@ const DirectorTurma = () => {
         const medias = alunoNotas.map(n => n.media_trimestral).filter(m => m !== null);
         const mediaGeral = medias.length > 0 ? medias.reduce((a, b) => a + Number(b), 0) / medias.length : 0;
 
-        // Determinar status
-        let status: 'aprovado' | 'reprovado' | 'em_exame' | 'pendente' = 'pendente';
+        // Determinar status usando helper baseado na classe
+        let status: 'aprovado' | 'reprovado' | 'em_exame' | 'pendente' | 'progride' | 'retido' = 'pendente';
         if (medias.length >= 3) {
+          const classeTemExame = hasExame(turmaData.classe);
           if (mediaGeral >= 10) {
             status = 'aprovado';
             aprovados++;
-          } else if (mediaGeral >= 8) {
-            status = 'em_exame';
-            emExame++;
+          } else if (mediaGeral >= 7) {
+            if (classeTemExame) {
+              status = 'em_exame';
+              emExame++;
+            } else {
+              status = 'progride';
+              emExame++; // Contamos como "em transição"
+            }
           } else {
-            status = 'reprovado';
+            status = classeTemExame ? 'reprovado' : 'retido';
             reprovados++;
           }
         } else {
@@ -270,16 +279,8 @@ const DirectorTurma = () => {
   ];
 
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'aprovado':
-        return <Badge className="bg-green-100 text-green-800">Aprovado</Badge>;
-      case 'reprovado':
-        return <Badge className="bg-red-100 text-red-800">Reprovado</Badge>;
-      case 'em_exame':
-        return <Badge className="bg-amber-100 text-amber-800">Em Exame</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">Pendente</Badge>;
-    }
+    const colors = getStatusColors(status);
+    return <Badge className={`${colors.bg} ${colors.text}`}>{getStatusLabel(status)}</Badge>;
   };
 
   if (authLoading || loading) {
