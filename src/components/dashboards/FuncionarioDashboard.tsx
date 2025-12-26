@@ -8,6 +8,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Ba
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertasPanel } from "@/components/AlertasPanel";
 
 const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6'];
 
@@ -490,6 +491,9 @@ export const FuncionarioDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Alertas Panel */}
+      <AlertasPanel />
 
       <Card>
         <CardHeader>

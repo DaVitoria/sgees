@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, BookOpen, DollarSign, TrendingUp, GraduationCap, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { AlertasPanel } from "@/components/AlertasPanel";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
 
@@ -181,7 +182,10 @@ export const AdminDashboard = () => {
         ))}
       </div>
 
+      {/* Alertas Panel */}
       <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+        <AlertasPanel />
+        
         <Card>
           <CardHeader className="pb-2 sm:pb-4">
             <CardTitle className="text-base sm:text-lg">Distribuição de Alunos por Classe</CardTitle>
@@ -208,7 +212,9 @@ export const AdminDashboard = () => {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+      </div>
 
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2 sm:pb-4">
             <CardTitle className="text-base sm:text-lg">Alunos por Turma</CardTitle>
@@ -225,26 +231,26 @@ export const AdminDashboard = () => {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </div>
 
-      <Card>
-        <CardHeader className="pb-2 sm:pb-4">
-          <CardTitle className="text-base sm:text-lg">Visão Financeira por Categoria</CardTitle>
-        </CardHeader>
-        <CardContent className="p-2 sm:p-6">
-          <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
-            <BarChart data={financeData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="categoria" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(value) => `${Number(value).toLocaleString()} MZN`} />
-              <Legend wrapperStyle={{ fontSize: '12px' }} />
-              <Bar dataKey="entrada" fill="#10b981" name="Entradas" />
-              <Bar dataKey="saida" fill="#ef4444" name="Saídas" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg">Visão Financeira por Categoria</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2 sm:p-6">
+            <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
+              <BarChart data={financeData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="categoria" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(value) => `${Number(value).toLocaleString()} MZN`} />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="entrada" fill="#10b981" name="Entradas" />
+                <Bar dataKey="saida" fill="#ef4444" name="Saídas" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

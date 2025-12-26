@@ -77,15 +77,82 @@ serve(async (req) => {
       );
     }
 
-    // Delete user from auth.users (cascades to profiles due to FK)
+    console.log(`Attempting to delete user: ${userId}`);
+
+    // First, delete related records that might block the deletion
+    // Delete user roles
+    const { error: rolesError } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId);
+    
+    if (rolesError) {
+      console.log("Error deleting user roles:", rolesError.message);
+    }
+
+    // Delete from alunos if exists
+    const { error: alunosError } = await supabaseAdmin
+      .from("alunos")
+      .delete()
+      .eq("user_id", userId);
+    
+    if (alunosError) {
+      console.log("Error deleting alunos:", alunosError.message);
+    }
+
+    // Delete from professores if exists
+    const { error: professoresError } = await supabaseAdmin
+      .from("professores")
+      .delete()
+      .eq("user_id", userId);
+    
+    if (professoresError) {
+      console.log("Error deleting professores:", professoresError.message);
+    }
+
+    // Delete from funcionarios if exists
+    const { error: funcionariosError } = await supabaseAdmin
+      .from("funcionarios")
+      .delete()
+      .eq("user_id", userId);
+    
+    if (funcionariosError) {
+      console.log("Error deleting funcionarios:", funcionariosError.message);
+    }
+
+    // Delete notifications for this user
+    const { error: notificacoesError } = await supabaseAdmin
+      .from("notificacoes")
+      .delete()
+      .eq("user_id", userId);
+    
+    if (notificacoesError) {
+      console.log("Error deleting notificacoes:", notificacoesError.message);
+    }
+
+    // Delete profile (this should cascade or set null for other references)
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .delete()
+      .eq("id", userId);
+    
+    if (profileError) {
+      console.log("Error deleting profile:", profileError.message);
+      // Continue anyway, as deleting the auth user will handle cleanup
+    }
+
+    // Delete user from auth.users
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteError) {
+      console.log("Error deleting auth user:", deleteError.message);
       return new Response(
-        JSON.stringify({ error: deleteError.message }),
+        JSON.stringify({ error: `Erro ao eliminar utilizador: ${deleteError.message}` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log(`User ${userId} deleted successfully`);
 
     return new Response(
       JSON.stringify({ success: true, message: "User deleted successfully" }),
@@ -93,6 +160,7 @@ serve(async (req) => {
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Delete user error:", errorMessage);
     return new Response(
       JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

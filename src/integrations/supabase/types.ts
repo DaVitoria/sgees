@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      alertas_sistema: {
+        Row: {
+          created_at: string | null
+          data_vencimento: string | null
+          id: string
+          mensagem: string
+          referencia_id: string | null
+          referencia_tipo: string | null
+          resolvido: boolean | null
+          resolvido_em: string | null
+          resolvido_por: string | null
+          tipo: string
+          titulo: string
+          updated_at: string | null
+          valor: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_vencimento?: string | null
+          id?: string
+          mensagem: string
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          resolvido?: boolean | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string | null
+          valor?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data_vencimento?: string | null
+          id?: string
+          mensagem?: string
+          referencia_id?: string | null
+          referencia_tipo?: string | null
+          resolvido?: boolean | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string | null
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_sistema_resolvido_por_fkey"
+            columns: ["resolvido_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alunos: {
         Row: {
           created_at: string | null
@@ -1057,6 +1113,8 @@ export type Database = {
         }
         Returns: number
       }
+      gerar_alertas_notas_pendentes: { Args: never; Returns: undefined }
+      gerar_alertas_pagamentos_atrasados: { Args: never; Returns: undefined }
       gerar_numero_matricula: { Args: never; Returns: string }
       get_financial_summary: { Args: never; Returns: Json }
       get_gender_statistics: { Args: never; Returns: Json }
