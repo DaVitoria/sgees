@@ -266,10 +266,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "documentos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_basico"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_documentos_aluno_id"
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_documentos_aluno_id"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_basico"
             referencedColumns: ["id"]
           },
           {
@@ -352,6 +366,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "exames_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_basico"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "exames_ano_lectivo_id_fkey"
             columns: ["ano_lectivo_id"]
             isOneToOne: false
@@ -420,10 +441,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "financas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_basico"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_financas_aluno_id"
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_financas_aluno_id"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_basico"
             referencedColumns: ["id"]
           },
           {
@@ -569,6 +604,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fk_matriculas_aluno_id"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_basico"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "fk_matriculas_ano_lectivo_id"
             columns: ["ano_lectivo_id"]
             isOneToOne: false
@@ -587,6 +629,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matriculas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_basico"
             referencedColumns: ["id"]
           },
           {
@@ -663,6 +712,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_notas_aluno"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_basico"
             referencedColumns: ["id"]
           },
           {
@@ -1095,7 +1151,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      alunos_basico: {
+        Row: {
+          created_at: string | null
+          data_matricula: string | null
+          email: string | null
+          estado: string | null
+          id: string | null
+          nome_completo: string | null
+          numero_matricula: string | null
+          turma_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_alunos_turma"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_alunos_user"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       admin_assign_role: {
