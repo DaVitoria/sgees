@@ -15,12 +15,13 @@ import {
 import { exportMultiSheetExcel } from "@/utils/exportToExcel";
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, AreaChart, Area
+  PieChart, Pie, Cell, AreaChart, Area
 } from "recharts";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { getAlunoStatus } from "@/utils/statusHelper";
 
 interface SchoolStats {
   total_alunos: number;
@@ -59,6 +60,26 @@ interface AnoLectivo {
   activo: boolean;
 }
 
+// Nova interface para estatísticas detalhadas por classe
+interface EstatisticaClasseDetalhada {
+  classe: number;
+  totalHM: number;
+  totalH: number;
+  totalM: number;
+  percentagemM: number;
+  transferidos: number;
+  desistentes: number;
+  obitos: number;
+  chegaramFimHM: number;
+  chegaramFimM: number;
+  positivosM: number;
+  positivosHM: number;
+  percentagemPositivos: number;
+  negativosM: number;
+  negativosHM: number;
+  percentagemNegativos: number;
+}
+
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 const Relatorios = () => {
@@ -75,6 +96,7 @@ const Relatorios = () => {
   const [selectedAno, setSelectedAno] = useState<string>("");
   const [loadingData, setLoadingData] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [estatisticasDetalhadas, setEstatisticasDetalhadas] = useState<EstatisticaClasseDetalhada[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -138,34 +160,158 @@ const Relatorios = () => {
 
   const fetchDataByAno = async () => {
     try {
-      // Fetch alunos por classe
-      const { data: alunosClasse, error: alunosClasseError } = await supabase
+      // Fetch alunos com detalhes para estatísticas detalhadas
+      const { data: alunosDetalhados, error: alunosDetalhadosError } = await supabase
         .from("alunos")
         .select(`
+          id,
+          estado,
           turmas!inner (
             classe,
             ano_lectivo_id
+          ),
+          profiles!inner (
+            sexo
           )
         `)
-        .eq("estado", "activo")
         .eq("turmas.ano_lectivo_id", selectedAno);
 
-      if (alunosClasseError) throw alunosClasseError;
+      if (alunosDetalhadosError) throw alunosDetalhadosError;
 
-      // Group by classe
-      const classeCount: Record<number, number> = {};
-      alunosClasse?.forEach(aluno => {
-        const classe = (aluno.turmas as any)?.classe;
-        if (classe) {
-          classeCount[classe] = (classeCount[classe] || 0) + 1;
+      // Fetch notas para determinar situação positiva/negativa
+      const { data: notas, error: notasError } = await supabase
+        .from("notas")
+        .select("aluno_id, disciplina_id, media_trimestral, trimestre")
+        .eq("ano_lectivo_id", selectedAno);
+
+      if (notasError) throw notasError;
+
+      // Calcular média anual por aluno
+      const mediasPorAluno: Record<string, { total: number; count: number }> = {};
+      notas?.forEach(nota => {
+        if (nota.media_trimestral != null) {
+          if (!mediasPorAluno[nota.aluno_id]) {
+            mediasPorAluno[nota.aluno_id] = { total: 0, count: 0 };
+          }
+          mediasPorAluno[nota.aluno_id].total += Number(nota.media_trimestral);
+          mediasPorAluno[nota.aluno_id].count += 1;
         }
       });
 
-      setAlunosPorClasse(
-        Object.entries(classeCount)
-          .map(([classe, total]) => ({ classe: parseInt(classe), total }))
-          .sort((a, b) => a.classe - b.classe)
-      );
+      const mediasFinais: Record<string, number> = {};
+      Object.entries(mediasPorAluno).forEach(([alunoId, { total, count }]) => {
+        mediasFinais[alunoId] = count > 0 ? total / count : 0;
+      });
+
+      // Agrupar por classe
+      const classeStats: Record<number, {
+        totalHM: number;
+        totalH: number;
+        totalM: number;
+        transferidos: number;
+        desistentes: number;
+        obitos: number;
+        chegaramFimHM: number;
+        chegaramFimM: number;
+        positivosM: number;
+        positivosHM: number;
+        negativosM: number;
+        negativosHM: number;
+      }> = {};
+
+      alunosDetalhados?.forEach(aluno => {
+        const classe = (aluno.turmas as any)?.classe;
+        const sexo = (aluno.profiles as any)?.sexo?.toLowerCase();
+        const estado = aluno.estado?.toLowerCase() || 'activo';
+        const isM = sexo === 'f' || sexo === 'feminino';
+        const isH = sexo === 'm' || sexo === 'masculino';
+
+        if (!classe) return;
+
+        if (!classeStats[classe]) {
+          classeStats[classe] = {
+            totalHM: 0,
+            totalH: 0,
+            totalM: 0,
+            transferidos: 0,
+            desistentes: 0,
+            obitos: 0,
+            chegaramFimHM: 0,
+            chegaramFimM: 0,
+            positivosM: 0,
+            positivosHM: 0,
+            negativosM: 0,
+            negativosHM: 0
+          };
+        }
+
+        classeStats[classe].totalHM += 1;
+        if (isH) classeStats[classe].totalH += 1;
+        if (isM) classeStats[classe].totalM += 1;
+
+        // Estados especiais
+        if (estado === 'transferido') {
+          classeStats[classe].transferidos += 1;
+        } else if (estado === 'desistente') {
+          classeStats[classe].desistentes += 1;
+        } else if (estado === 'obito' || estado === 'óbito') {
+          classeStats[classe].obitos += 1;
+        } else if (estado === 'activo') {
+          // Chegaram ao fim são os activos
+          classeStats[classe].chegaramFimHM += 1;
+          if (isM) classeStats[classe].chegaramFimM += 1;
+
+          // Verificar situação académica
+          const media = mediasFinais[aluno.id];
+          if (media !== undefined && media > 0) {
+            const status = getAlunoStatus(media, classe);
+            const isPositivo = status === 'aprovado' || status === 'progride';
+            const isNegativo = status === 'reprovado' || status === 'retido';
+
+            if (isPositivo) {
+              classeStats[classe].positivosHM += 1;
+              if (isM) classeStats[classe].positivosM += 1;
+            } else if (isNegativo) {
+              classeStats[classe].negativosHM += 1;
+              if (isM) classeStats[classe].negativosM += 1;
+            }
+          }
+        }
+      });
+
+      // Converter para array de estatísticas detalhadas
+      const estatisticas: EstatisticaClasseDetalhada[] = Object.entries(classeStats)
+        .map(([classeStr, stats]) => {
+          const classe = parseInt(classeStr);
+          return {
+            classe,
+            totalHM: stats.totalHM,
+            totalH: stats.totalH,
+            totalM: stats.totalM,
+            percentagemM: stats.totalHM > 0 ? (stats.totalM / stats.totalHM) * 100 : 0,
+            transferidos: stats.transferidos,
+            desistentes: stats.desistentes,
+            obitos: stats.obitos,
+            chegaramFimHM: stats.chegaramFimHM,
+            chegaramFimM: stats.chegaramFimM,
+            positivosM: stats.positivosM,
+            positivosHM: stats.positivosHM,
+            percentagemPositivos: stats.chegaramFimHM > 0 ? (stats.positivosHM / stats.chegaramFimHM) * 100 : 0,
+            negativosM: stats.negativosM,
+            negativosHM: stats.negativosHM,
+            percentagemNegativos: stats.chegaramFimHM > 0 ? (stats.negativosHM / stats.chegaramFimHM) * 100 : 0
+          };
+        })
+        .sort((a, b) => a.classe - b.classe);
+
+      setEstatisticasDetalhadas(estatisticas);
+
+      // Manter compatibilidade com dados antigos
+      const alunosPorClasseSimples: AlunosPorClasse[] = estatisticas.map(e => ({
+        classe: e.classe,
+        total: e.totalHM
+      }));
+      setAlunosPorClasse(alunosPorClasseSimples);
 
       // Fetch alunos por estado
       const { data: alunosEstado, error: alunosEstadoError } = await supabase
@@ -215,33 +361,144 @@ const Relatorios = () => {
   const generateReport = async () => {
     setGenerating(true);
     try {
-      const doc = new jsPDF();
+      const doc = new jsPDF('landscape');
       const pageWidth = doc.internal.pageSize.getWidth();
       const hoje = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: pt });
       const anoLectivo = anosLectivos.find(a => a.id === selectedAno)?.ano || "";
 
       // Header
-      doc.setFontSize(20);
+      doc.setFontSize(18);
       doc.setFont("helvetica", "bold");
-      doc.text("RELATÓRIO ADMINISTRATIVO", pageWidth / 2, 20, { align: "center" });
+      doc.text("RELATÓRIO ADMINISTRATIVO DETALHADO", pageWidth / 2, 15, { align: "center" });
 
-      doc.setFontSize(12);
+      doc.setFontSize(11);
       doc.setFont("helvetica", "normal");
-      doc.text(`Ano Lectivo: ${anoLectivo}`, pageWidth / 2, 28, { align: "center" });
-      doc.text(`Data de Emissão: ${hoje}`, pageWidth / 2, 35, { align: "center" });
+      doc.text(`Ano Lectivo: ${anoLectivo}`, pageWidth / 2, 22, { align: "center" });
+      doc.text(`Data de Emissão: ${hoje}`, pageWidth / 2, 28, { align: "center" });
 
       // Line separator
       doc.setLineWidth(0.5);
-      doc.line(14, 40, pageWidth - 14, 40);
+      doc.line(14, 32, pageWidth - 14, 32);
+
+      // Estatísticas Detalhadas por Classe
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("ESTATÍSTICAS DETALHADAS POR CLASSE", 14, 40);
+
+      if (estatisticasDetalhadas.length > 0) {
+        // Calcular totais
+        const totais = estatisticasDetalhadas.reduce((acc, curr) => ({
+          totalHM: acc.totalHM + curr.totalHM,
+          totalH: acc.totalH + curr.totalH,
+          totalM: acc.totalM + curr.totalM,
+          transferidos: acc.transferidos + curr.transferidos,
+          desistentes: acc.desistentes + curr.desistentes,
+          obitos: acc.obitos + curr.obitos,
+          chegaramFimHM: acc.chegaramFimHM + curr.chegaramFimHM,
+          chegaramFimM: acc.chegaramFimM + curr.chegaramFimM,
+          positivosM: acc.positivosM + curr.positivosM,
+          positivosHM: acc.positivosHM + curr.positivosHM,
+          negativosM: acc.negativosM + curr.negativosM,
+          negativosHM: acc.negativosHM + curr.negativosHM
+        }), {
+          totalHM: 0, totalH: 0, totalM: 0, transferidos: 0, desistentes: 0, obitos: 0,
+          chegaramFimHM: 0, chegaramFimM: 0, positivosM: 0, positivosHM: 0, negativosM: 0, negativosHM: 0
+        });
+
+        autoTable(doc, {
+          startY: 45,
+          head: [[
+            'Classe',
+            'Total HM',
+            'H',
+            'M',
+            '% M',
+            'Transf.',
+            'Desist.',
+            'Óbitos',
+            'Fim HM',
+            'Fim M',
+            'Pos. M',
+            'Pos. HM',
+            '% Pos.',
+            'Neg. M',
+            'Neg. HM',
+            '% Neg.'
+          ]],
+          body: [
+            ...estatisticasDetalhadas.map(item => [
+              `${item.classe}ª`,
+              item.totalHM.toString(),
+              item.totalH.toString(),
+              item.totalM.toString(),
+              `${item.percentagemM.toFixed(1)}%`,
+              item.transferidos.toString(),
+              item.desistentes.toString(),
+              item.obitos.toString(),
+              item.chegaramFimHM.toString(),
+              item.chegaramFimM.toString(),
+              item.positivosM.toString(),
+              item.positivosHM.toString(),
+              `${item.percentagemPositivos.toFixed(1)}%`,
+              item.negativosM.toString(),
+              item.negativosHM.toString(),
+              `${item.percentagemNegativos.toFixed(1)}%`
+            ]),
+            // Linha de totais
+            [
+              'TOTAL',
+              totais.totalHM.toString(),
+              totais.totalH.toString(),
+              totais.totalM.toString(),
+              totais.totalHM > 0 ? `${((totais.totalM / totais.totalHM) * 100).toFixed(1)}%` : '0%',
+              totais.transferidos.toString(),
+              totais.desistentes.toString(),
+              totais.obitos.toString(),
+              totais.chegaramFimHM.toString(),
+              totais.chegaramFimM.toString(),
+              totais.positivosM.toString(),
+              totais.positivosHM.toString(),
+              totais.chegaramFimHM > 0 ? `${((totais.positivosHM / totais.chegaramFimHM) * 100).toFixed(1)}%` : '0%',
+              totais.negativosM.toString(),
+              totais.negativosHM.toString(),
+              totais.chegaramFimHM > 0 ? `${((totais.negativosHM / totais.chegaramFimHM) * 100).toFixed(1)}%` : '0%'
+            ]
+          ],
+          theme: "grid",
+          headStyles: { fillColor: [0, 51, 102], textColor: 255, fontSize: 7, halign: 'center' },
+          bodyStyles: { fontSize: 7, halign: 'center' },
+          footStyles: { fillColor: [240, 240, 240], fontStyle: "bold" },
+          columnStyles: {
+            0: { halign: 'left', fontStyle: 'bold' }
+          },
+          didParseCell: function(data) {
+            // Destacar linha de totais
+            if (data.row.index === estatisticasDetalhadas.length && data.section === 'body') {
+              data.cell.styles.fillColor = [240, 240, 240];
+              data.cell.styles.fontStyle = 'bold';
+            }
+          }
+        });
+      }
+
+      // Legenda
+      let currentY = (doc as any).lastAutoTable.finalY + 10;
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "italic");
+      doc.text("Legenda: HM = Homens + Mulheres | H = Homens | M = Mulheres | Transf. = Transferidos | Desist. = Desistentes", 14, currentY);
+      doc.text("Fim HM/M = Alunos que chegaram ao fim | Pos. = Situação Positiva (Aprovados/Progride) | Neg. = Situação Negativa (Reprovados/Retidos)", 14, currentY + 5);
+
+      // Nova página para estatísticas gerais
+      doc.addPage('portrait');
 
       // School Statistics
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
-      doc.text("1. ESTATÍSTICAS GERAIS", 14, 50);
+      doc.text("ESTATÍSTICAS GERAIS", 14, 20);
 
       if (schoolStats) {
         autoTable(doc, {
-          startY: 55,
+          startY: 25,
           head: [["Indicador", "Quantidade"]],
           body: [
             ["Total de Alunos Activos", schoolStats.total_alunos.toString()],
@@ -256,36 +513,11 @@ const Relatorios = () => {
         });
       }
 
-      // Alunos por Classe
-      let currentY = (doc as any).lastAutoTable.finalY + 15;
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "bold");
-      doc.text("2. ALUNOS POR CLASSE", 14, currentY);
-
-      if (alunosPorClasse.length > 0) {
-        autoTable(doc, {
-          startY: currentY + 5,
-          head: [["Classe", "Quantidade de Alunos"]],
-          body: alunosPorClasse.map(item => [`${item.classe}ª Classe`, item.total.toString()]),
-          foot: [["TOTAL", alunosPorClasse.reduce((sum, item) => sum + item.total, 0).toString()]],
-          theme: "grid",
-          headStyles: { fillColor: [0, 51, 102], textColor: 255 },
-          footStyles: { fillColor: [240, 240, 240], fontStyle: "bold" },
-          styles: { fontSize: 10 }
-        });
-      }
-
       // Financial Summary
       currentY = (doc as any).lastAutoTable.finalY + 15;
-
-      if (currentY > 200) {
-        doc.addPage();
-        currentY = 20;
-      }
-
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
-      doc.text("3. RESUMO FINANCEIRO", 14, currentY);
+      doc.text("RESUMO FINANCEIRO", 14, currentY);
 
       if (financialSummary) {
         autoTable(doc, {
@@ -308,7 +540,7 @@ const Relatorios = () => {
       currentY = (doc as any).lastAutoTable.finalY + 15;
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
-      doc.text("4. ALUNOS POR ESTADO", 14, currentY);
+      doc.text("ALUNOS POR ESTADO", 14, currentY);
 
       if (alunosPorEstado.length > 0) {
         autoTable(doc, {
@@ -329,7 +561,7 @@ const Relatorios = () => {
         doc.setFont("helvetica", "italic");
         doc.text(
           `Página ${i} de ${totalPages} | Sistema de Gestão Escolar`,
-          pageWidth / 2,
+          doc.internal.pageSize.getWidth() / 2,
           doc.internal.pageSize.getHeight() - 10,
           { align: "center" }
         );
@@ -357,6 +589,90 @@ const Relatorios = () => {
     
     const sheets = [];
 
+    // Estatísticas Detalhadas por Classe (nova folha principal)
+    if (estatisticasDetalhadas.length > 0) {
+      const totais = estatisticasDetalhadas.reduce((acc, curr) => ({
+        totalHM: acc.totalHM + curr.totalHM,
+        totalH: acc.totalH + curr.totalH,
+        totalM: acc.totalM + curr.totalM,
+        transferidos: acc.transferidos + curr.transferidos,
+        desistentes: acc.desistentes + curr.desistentes,
+        obitos: acc.obitos + curr.obitos,
+        chegaramFimHM: acc.chegaramFimHM + curr.chegaramFimHM,
+        chegaramFimM: acc.chegaramFimM + curr.chegaramFimM,
+        positivosM: acc.positivosM + curr.positivosM,
+        positivosHM: acc.positivosHM + curr.positivosHM,
+        negativosM: acc.negativosM + curr.negativosM,
+        negativosHM: acc.negativosHM + curr.negativosHM
+      }), {
+        totalHM: 0, totalH: 0, totalM: 0, transferidos: 0, desistentes: 0, obitos: 0,
+        chegaramFimHM: 0, chegaramFimM: 0, positivosM: 0, positivosHM: 0, negativosM: 0, negativosHM: 0
+      });
+
+      const dadosDetalhados = [
+        ...estatisticasDetalhadas.map(item => ({
+          classe: `${item.classe}ª Classe`,
+          totalHM: item.totalHM,
+          totalH: item.totalH,
+          totalM: item.totalM,
+          percentagemM: `${item.percentagemM.toFixed(1)}%`,
+          transferidos: item.transferidos,
+          desistentes: item.desistentes,
+          obitos: item.obitos,
+          chegaramFimHM: item.chegaramFimHM,
+          chegaramFimM: item.chegaramFimM,
+          positivosM: item.positivosM,
+          positivosHM: item.positivosHM,
+          percentagemPositivos: `${item.percentagemPositivos.toFixed(1)}%`,
+          negativosM: item.negativosM,
+          negativosHM: item.negativosHM,
+          percentagemNegativos: `${item.percentagemNegativos.toFixed(1)}%`
+        })),
+        // Linha de totais
+        {
+          classe: 'TOTAL',
+          totalHM: totais.totalHM,
+          totalH: totais.totalH,
+          totalM: totais.totalM,
+          percentagemM: totais.totalHM > 0 ? `${((totais.totalM / totais.totalHM) * 100).toFixed(1)}%` : '0%',
+          transferidos: totais.transferidos,
+          desistentes: totais.desistentes,
+          obitos: totais.obitos,
+          chegaramFimHM: totais.chegaramFimHM,
+          chegaramFimM: totais.chegaramFimM,
+          positivosM: totais.positivosM,
+          positivosHM: totais.positivosHM,
+          percentagemPositivos: totais.chegaramFimHM > 0 ? `${((totais.positivosHM / totais.chegaramFimHM) * 100).toFixed(1)}%` : '0%',
+          negativosM: totais.negativosM,
+          negativosHM: totais.negativosHM,
+          percentagemNegativos: totais.chegaramFimHM > 0 ? `${((totais.negativosHM / totais.chegaramFimHM) * 100).toFixed(1)}%` : '0%'
+        }
+      ];
+
+      sheets.push({
+        name: "Estatísticas Detalhadas",
+        data: dadosDetalhados,
+        columns: [
+          { header: "Classe", key: "classe", width: 15 },
+          { header: "Total HM", key: "totalHM", width: 12 },
+          { header: "Homens (H)", key: "totalH", width: 12 },
+          { header: "Mulheres (M)", key: "totalM", width: 12 },
+          { header: "% Mulheres", key: "percentagemM", width: 12 },
+          { header: "Transferidos", key: "transferidos", width: 12 },
+          { header: "Desistentes", key: "desistentes", width: 12 },
+          { header: "Óbitos", key: "obitos", width: 10 },
+          { header: "Fim HM", key: "chegaramFimHM", width: 10 },
+          { header: "Fim M", key: "chegaramFimM", width: 10 },
+          { header: "Positivos M", key: "positivosM", width: 12 },
+          { header: "Positivos HM", key: "positivosHM", width: 12 },
+          { header: "% Positivos", key: "percentagemPositivos", width: 12 },
+          { header: "Negativos M", key: "negativosM", width: 12 },
+          { header: "Negativos HM", key: "negativosHM", width: 12 },
+          { header: "% Negativos", key: "percentagemNegativos", width: 12 },
+        ],
+      });
+    }
+
     // Estatísticas Gerais
     if (schoolStats) {
       sheets.push({
@@ -371,21 +687,6 @@ const Relatorios = () => {
         columns: [
           { header: "Indicador", key: "indicador", width: 30 },
           { header: "Quantidade", key: "valor", width: 15 },
-        ],
-      });
-    }
-
-    // Alunos por Classe
-    if (alunosPorClasse.length > 0) {
-      sheets.push({
-        name: "Alunos por Classe",
-        data: alunosPorClasse.map(item => ({
-          classe: `${item.classe}ª Classe`,
-          quantidade: item.total,
-        })),
-        columns: [
-          { header: "Classe", key: "classe", width: 20 },
-          { header: "Quantidade de Alunos", key: "quantidade", width: 20 },
         ],
       });
     }
