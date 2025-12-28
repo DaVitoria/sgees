@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar, History, CheckCircle, XCircle, Clock, ArrowRight, Phone, Mail, FileEdit, ClipboardList } from "lucide-react";
+import { GraduationCap, FileText, TrendingUp, Award, BookOpen, Download, Loader2, Filter, Calendar, History, CheckCircle, XCircle, Clock, ArrowRight, Phone, Mail, FileEdit, ClipboardList, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, LineChart, Line } from "recharts";
 import { generateBoletimPDF } from "@/utils/generateBoletimPDF";
 import { useToast } from "@/hooks/use-toast";
+import { PagamentosAluno } from "@/components/aluno/PagamentosAluno";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
 
@@ -1144,7 +1146,12 @@ export const AlunoDashboard = () => {
         </Card>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Secção de Pagamentos */}
+      <div className="mt-8">
+        <PagamentosAluno alunoId={aluno.id} />
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 mt-6">
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <FileText className="h-5 w-5 text-primary" />

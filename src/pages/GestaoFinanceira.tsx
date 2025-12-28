@@ -36,10 +36,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, TrendingUp, TrendingDown, DollarSign, Filter } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, DollarSign, Filter, Clock, CreditCard } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { z } from "zod";
+import { ConfirmacaoPagamentos } from "@/components/financeiro/ConfirmacaoPagamentos";
 
 const transacaoSchema = z.object({
   tipo: z.enum(["entrada", "saida"]),
@@ -125,6 +128,8 @@ const GestaoFinanceira = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todos");
+  const [pendingCount, setPendingCount] = useState(0);
+  const [activeTab, setActiveTab] = useState("transacoes");
   const [formData, setFormData] = useState<TransacaoFormData>({
     tipo: "entrada",
     categoria: "",
@@ -143,11 +148,20 @@ const GestaoFinanceira = () => {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    if (user && (userRole === "admin" || userRole === "tesoureiro")) {
+    if (user && (userRole === "admin" || userRole === "tesoureiro" || userRole === "secretario" || userRole === "funcionario")) {
       fetchTransacoes();
       fetchAlunos();
+      fetchPendingCount();
     }
   }, [user, userRole]);
+
+  const fetchPendingCount = async () => {
+    const { count } = await supabase
+      .from("financas")
+      .select("*", { count: "exact", head: true })
+      .eq("status_confirmacao", "pendente");
+    setPendingCount(count || 0);
+  };
 
   const fetchTransacoes = async () => {
     try {
@@ -333,7 +347,7 @@ const GestaoFinanceira = () => {
     );
   }
 
-  if (!user || (userRole !== "admin" && userRole !== "tesoureiro")) {
+  if (!user || (userRole !== "admin" && userRole !== "tesoureiro" && userRole !== "secretario" && userRole !== "funcionario")) {
     navigate("/dashboard");
     return null;
   }
@@ -346,11 +360,32 @@ const GestaoFinanceira = () => {
             <h1 className="text-3xl font-bold">Gestão Financeira</h1>
             <p className="text-muted-foreground">Controle de receitas e despesas da escola</p>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Transação
-          </Button>
         </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="transacoes" className="gap-2">
+              <DollarSign className="h-4 w-4" />
+              Transações
+            </TabsTrigger>
+            <TabsTrigger value="confirmacao" className="gap-2">
+              <CreditCard className="h-4 w-4" />
+              Confirmação de Pagamentos
+              {pendingCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 px-1.5">
+                  {pendingCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="transacoes" className="space-y-6">
+            <div className="flex justify-end">
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Transação
+              </Button>
+            </div>
 
         {/* Resumo Financeiro */}
         <div className="grid gap-4 md:grid-cols-3 mb-6">
@@ -523,6 +558,13 @@ const GestaoFinanceira = () => {
             </div>
           </CardContent>
         </Card>
+
+          </TabsContent>
+
+          <TabsContent value="confirmacao">
+            <ConfirmacaoPagamentos />
+          </TabsContent>
+        </Tabs>
 
         {/* Dialog para Nova Transação */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

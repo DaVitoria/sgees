@@ -400,11 +400,15 @@ export type Database = {
           aluno_id: string | null
           categoria: Database["public"]["Enums"]["categoria_financeira"]
           comprovante: string | null
+          confirmado_por: string | null
           created_at: string | null
+          data_confirmacao: string | null
           data_transacao: string | null
           descricao: string
           id: string
+          motivo_rejeicao: string | null
           registado_por: string
+          status_confirmacao: string | null
           tipo: Database["public"]["Enums"]["tipo_transacao"]
           valor: number
         }
@@ -412,11 +416,15 @@ export type Database = {
           aluno_id?: string | null
           categoria: Database["public"]["Enums"]["categoria_financeira"]
           comprovante?: string | null
+          confirmado_por?: string | null
           created_at?: string | null
+          data_confirmacao?: string | null
           data_transacao?: string | null
           descricao: string
           id?: string
+          motivo_rejeicao?: string | null
           registado_por: string
+          status_confirmacao?: string | null
           tipo: Database["public"]["Enums"]["tipo_transacao"]
           valor: number
         }
@@ -424,11 +432,15 @@ export type Database = {
           aluno_id?: string | null
           categoria?: Database["public"]["Enums"]["categoria_financeira"]
           comprovante?: string | null
+          confirmado_por?: string | null
           created_at?: string | null
+          data_confirmacao?: string | null
           data_transacao?: string | null
           descricao?: string
           id?: string
+          motivo_rejeicao?: string | null
           registado_por?: string
+          status_confirmacao?: string | null
           tipo?: Database["public"]["Enums"]["tipo_transacao"]
           valor?: number
         }
@@ -445,6 +457,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos_basico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financas_confirmado_por_fkey"
+            columns: ["confirmado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
