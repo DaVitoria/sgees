@@ -231,14 +231,14 @@ const DirectorTurma = () => {
     }
   };
 
-  const handleDownloadReport = () => {
+  const handleDownloadReport = async () => {
     if (!turma) return;
 
     const mediaGeral = alunos.length > 0
       ? alunos.reduce((acc, a) => acc + a.mediaGeral, 0) / alunos.length
       : 0;
 
-    generateTurmaReportPDF({
+    const result = await generateTurmaReportPDF({
       turma: {
         nome: turma.nome,
         classe: turma.classe,
@@ -259,10 +259,20 @@ const DirectorTurma = () => {
       },
     });
 
-    toast({
-      title: "Relatório Gerado",
-      description: "O download do relatório PDF foi iniciado.",
-    });
+    if (result.success) {
+      toast({
+        title: "Relatório Gerado",
+        description: result.path 
+          ? "O relatório PDF foi guardado com sucesso." 
+          : "O download do relatório PDF foi iniciado.",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o relatório.",
+        variant: "destructive",
+      });
+    }
   };
 
   const genderChartData = [

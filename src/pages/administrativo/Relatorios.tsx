@@ -584,7 +584,7 @@ const Relatorios = () => {
     }
   };
 
-  const generateExcel = () => {
+  const generateExcel = async () => {
     const anoLectivo = anosLectivos.find(a => a.id === selectedAno)?.ano || "";
     
     const sheets = [];
@@ -748,12 +748,22 @@ const Relatorios = () => {
       return;
     }
 
-    exportMultiSheetExcel(sheets, `Relatorio_Administrativo_${anoLectivo.replace("/", "-")}`);
+    const result = await exportMultiSheetExcel(sheets, `Relatorio_Administrativo_${anoLectivo.replace("/", "-")}`);
 
-    toast({
-      title: "Exportado",
-      description: "Ficheiro Excel gerado com sucesso.",
-    });
+    if (result.success) {
+      toast({
+        title: "Exportado",
+        description: result.path 
+          ? "Ficheiro Excel guardado com sucesso." 
+          : "Ficheiro Excel gerado com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível exportar o ficheiro.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading || loadingData) {

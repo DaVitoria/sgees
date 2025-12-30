@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { hasExame } from "./statusHelper";
+import { savePDF } from "./fileDownload";
 
 interface NotaData {
   disciplina: string;
@@ -27,7 +28,7 @@ interface BoletimData {
   anoLectivo: string;
 }
 
-export const generateBoletimPDF = (data: BoletimData) => {
+export const generateBoletimPDF = async (data: BoletimData): Promise<{ success: boolean; path?: string; error?: string }> => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
@@ -203,5 +204,6 @@ export const generateBoletimPDF = (data: BoletimData) => {
   doc.text("Fórmula: MT = MAS × 0.4 + AT × 0.6 | MA = Média das MT dos 3 trimestres", 14, legendY + 4);
   
   // Save
-  doc.save(`Boletim_${data.aluno.matricula}_${data.anoLectivo.replace("/", "-")}.pdf`);
+  const filename = `Boletim_${data.aluno.matricula}_${data.anoLectivo.replace("/", "-")}.pdf`;
+  return await savePDF(doc, filename);
 };

@@ -100,7 +100,7 @@ const Home = () => {
   const [organograma, setOrganograma] = useState<OrganogramaItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!financialSummary || !stats) {
       toast({
         title: "Erro",
@@ -111,11 +111,17 @@ const Home = () => {
     }
 
     try {
-      generateFinancialReportPDF(financialSummary, monthlyFinancial, stats);
-      toast({
-        title: "Relatório Exportado",
-        description: "O relatório financeiro foi gerado com sucesso."
-      });
+      const result = await generateFinancialReportPDF(financialSummary, monthlyFinancial, stats);
+      if (result.success) {
+        toast({
+          title: "Relatório Exportado",
+          description: result.path 
+            ? "O relatório financeiro foi guardado com sucesso." 
+            : "O relatório financeiro foi gerado com sucesso."
+        });
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast({

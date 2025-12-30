@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { savePDF } from "./fileDownload";
 
 interface FinancialSummary {
   total_entradas: number;
@@ -43,11 +44,11 @@ const formatDate = (date: Date): string => {
   });
 };
 
-export const generateFinancialReportPDF = (
+export const generateFinancialReportPDF = async (
   financialSummary: FinancialSummary,
   monthlyFinancial: MonthlyFinancial[],
   schoolStats: SchoolStats
-) => {
+): Promise<{ success: boolean; path?: string; error?: string }> => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   let yPosition = 20;
@@ -251,5 +252,5 @@ export const generateFinancialReportPDF = (
 
   // Save the PDF
   const fileName = `relatorio-financeiro-${new Date().toISOString().split('T')[0]}.pdf`;
-  doc.save(fileName);
+  return await savePDF(doc, fileName);
 };

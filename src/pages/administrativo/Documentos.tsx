@@ -312,7 +312,7 @@ const Documentos = () => {
           : null;
 
         // Generate PDF
-        generateBoletimPDF({
+        const result = await generateBoletimPDF({
           aluno: {
             nome: aluno.profiles?.nome_completo || "Aluno",
             matricula: aluno.numero_matricula,
@@ -323,6 +323,10 @@ const Documentos = () => {
           mediaAnual,
           notas: notasFormatted
         });
+
+        if (!result.success) {
+          throw new Error(result.error);
+        }
 
         // Register document in database
         await supabase.from("documentos").insert({
@@ -336,7 +340,9 @@ const Documentos = () => {
 
         toast({
           title: "Boletim gerado",
-          description: "O boletim foi gerado e baixado com sucesso"
+          description: result.path 
+            ? "O boletim foi guardado com sucesso" 
+            : "O boletim foi gerado e baixado com sucesso"
         });
       } else if (generateData.tipo === "declaracao_matricula") {
         generateDeclaracaoMatricula(aluno, anoLectivo);

@@ -139,7 +139,7 @@ const Aprovacoes = () => {
   const turmaSelecionada = turmas.find(t => t.id === selectedTurma);
   const classeTemExame = turmaSelecionada ? hasExame(turmaSelecionada.classe) : false;
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (aprovacoes.length === 0) {
       toast({
         title: "Sem dados",
@@ -157,7 +157,7 @@ const Aprovacoes = () => {
       status: getStatusLabel(aluno.status),
     }));
 
-    exportToExcel(exportData, {
+    const result = await exportToExcel(exportData, {
       filename: `Aprovacoes_${turmaInfo?.nome || 'Turma'}_${turmaInfo?.classe || ''}`,
       sheetName: "Aprovações",
       columns: [
@@ -168,10 +168,20 @@ const Aprovacoes = () => {
       ],
     });
 
-    toast({
-      title: "Exportado",
-      description: "Ficheiro Excel gerado com sucesso.",
-    });
+    if (result.success) {
+      toast({
+        title: "Exportado",
+        description: result.path 
+          ? "Ficheiro Excel guardado com sucesso." 
+          : "Ficheiro Excel gerado com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível exportar o ficheiro.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading || loadingData) {

@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { saveExcel } from "./fileDownload";
 
 export interface ExcelColumn {
   header: string;
@@ -12,10 +13,10 @@ export interface ExcelExportOptions {
   columns?: ExcelColumn[];
 }
 
-export const exportToExcel = (
+export const exportToExcel = async (
   data: Record<string, any>[],
   options: ExcelExportOptions
-) => {
+): Promise<{ success: boolean; path?: string; error?: string }> => {
   const { filename, sheetName = "Dados", columns } = options;
 
   let exportData = data;
@@ -44,14 +45,14 @@ export const exportToExcel = (
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
   // Generate file and trigger download
-  XLSX.writeFile(wb, `${filename}.xlsx`);
+  return await saveExcel(wb, `${filename}.xlsx`, XLSX);
 };
 
 // Helper function to export multiple sheets
-export const exportMultiSheetExcel = (
+export const exportMultiSheetExcel = async (
   sheets: { name: string; data: Record<string, any>[]; columns?: ExcelColumn[] }[],
   filename: string
-) => {
+): Promise<{ success: boolean; path?: string; error?: string }> => {
   const wb = XLSX.utils.book_new();
 
   sheets.forEach(sheet => {
@@ -76,5 +77,5 @@ export const exportMultiSheetExcel = (
     XLSX.utils.book_append_sheet(wb, ws, sheet.name);
   });
 
-  XLSX.writeFile(wb, `${filename}.xlsx`);
+  return await saveExcel(wb, `${filename}.xlsx`, XLSX);
 };

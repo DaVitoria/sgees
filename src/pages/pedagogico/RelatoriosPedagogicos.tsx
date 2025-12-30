@@ -138,7 +138,7 @@ const RelatoriosPedagogicos = () => {
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (stats.disciplinas.length === 0) {
       toast({
         title: "Sem dados",
@@ -161,7 +161,7 @@ const RelatoriosPedagogicos = () => {
       })),
     ];
 
-    exportToExcel(exportData, {
+    const result = await exportToExcel(exportData, {
       filename: `Relatorio_Pedagogico_${turmaInfo?.nome || 'Turma'}_${turmaInfo?.classe || ''}`,
       sheetName: "Relatório",
       columns: [
@@ -170,10 +170,20 @@ const RelatoriosPedagogicos = () => {
       ],
     });
 
-    toast({
-      title: "Exportado",
-      description: "Ficheiro Excel gerado com sucesso.",
-    });
+    if (result.success) {
+      toast({
+        title: "Exportado",
+        description: result.path 
+          ? "Ficheiro Excel guardado com sucesso." 
+          : "Ficheiro Excel gerado com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível exportar o ficheiro.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading || loadingData) {

@@ -348,7 +348,7 @@ export const AlunoDashboard = () => {
     return anosLectivos.find(a => a.id === selectedAnoLectivo)?.ano || "";
   };
 
-  const handleDownloadBoletim = () => {
+  const handleDownloadBoletim = async () => {
     if (!aluno || filteredNotas.length === 0) {
       toast({
         title: "Sem dados disponíveis",
@@ -383,12 +383,18 @@ export const AlunoDashboard = () => {
         anoLectivo: anoLectivoNome,
       };
 
-      generateBoletimPDF(boletimData);
+      const result = await generateBoletimPDF(boletimData);
 
-      toast({
-        title: "Boletim gerado!",
-        description: "O seu boletim de notas foi baixado com sucesso.",
-      });
+      if (result.success) {
+        toast({
+          title: "Boletim gerado!",
+          description: result.path 
+            ? "O seu boletim de notas foi guardado com sucesso." 
+            : "O seu boletim de notas foi baixado com sucesso.",
+        });
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       toast({

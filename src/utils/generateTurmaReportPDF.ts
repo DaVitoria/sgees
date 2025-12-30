@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { savePDF } from "./fileDownload";
 
 interface AlunoData {
   numero_matricula: string;
@@ -37,7 +38,7 @@ interface TurmaReportData {
   stats: TurmaStats;
 }
 
-export const generateTurmaReportPDF = (data: TurmaReportData) => {
+export const generateTurmaReportPDF = async (data: TurmaReportData): Promise<{ success: boolean; path?: string; error?: string }> => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -241,5 +242,5 @@ export const generateTurmaReportPDF = (data: TurmaReportData) => {
 
   // Save
   const fileName = `Relatorio_Turma_${data.turma.classe}${data.turma.nome}_${data.anoLectivo.replace("/", "-")}.pdf`;
-  doc.save(fileName);
+  return await savePDF(doc, fileName);
 };
