@@ -511,10 +511,10 @@ const GestaoAlunos = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Gestão de Alunos</h1>
-          <Button onClick={() => {
+      <div className="container mx-auto py-4 sm:py-8 px-2 sm:px-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Gestão de Alunos</h1>
+          <Button className="w-full sm:w-auto" onClick={() => {
             setEditingAluno(null);
             setFormData({
               nome_completo: "",
@@ -550,15 +550,15 @@ const GestaoAlunos = () => {
           </div>
         </div>
 
-        <div className="bg-card rounded-lg border">
+        {/* Desktop Table */}
+        <div className="hidden md:block bg-card rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Número de Matrícula</TableHead>
+                <TableHead>Nº Matrícula</TableHead>
                 <TableHead>Nome Completo</TableHead>
                 <TableHead>Turma</TableHead>
                 <TableHead>Encarregado</TableHead>
-                <TableHead>Telefone Encarregado</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -566,7 +566,7 @@ const GestaoAlunos = () => {
             <TableBody>
               {filteredAlunos.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
                     Nenhum aluno encontrado
                   </TableCell>
                 </TableRow>
@@ -579,7 +579,6 @@ const GestaoAlunos = () => {
                       {aluno.turmas ? `${aluno.turmas.classe}ª ${aluno.turmas.nome}` : "Sem turma"}
                     </TableCell>
                     <TableCell>{aluno.encarregado_nome}</TableCell>
-                    <TableCell>{aluno.encarregado_telefone}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         aluno.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -588,29 +587,14 @@ const GestaoAlunos = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => fetchHistorico(aluno.id)}
-                        >
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => fetchHistorico(aluno.id)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(aluno)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(aluno)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setDeletingAlunoId(aluno.id);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => { setDeletingAlunoId(aluno.id); setIsDeleteDialogOpen(true); }}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -622,9 +606,55 @@ const GestaoAlunos = () => {
           </Table>
         </div>
 
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-3">
+          {filteredAlunos.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhum aluno encontrado
+            </div>
+          ) : (
+            filteredAlunos.map((aluno) => (
+              <div key={aluno.id} className="bg-card rounded-lg border p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold">{aluno.profiles?.nome_completo || "N/A"}</p>
+                    <p className="text-sm text-muted-foreground">{aluno.numero_matricula}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    aluno.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {aluno.estado}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Turma:</span>
+                    <p>{aluno.turmas ? `${aluno.turmas.classe}ª ${aluno.turmas.nome}` : "Sem turma"}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Encarregado:</span>
+                    <p>{aluno.encarregado_nome}</p>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-1 pt-2 border-t">
+                  <Button variant="ghost" size="sm" onClick={() => fetchHistorico(aluno.id)}>
+                    <Eye className="h-4 w-4 mr-1" /> Ver
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => handleEdit(aluno)}>
+                    <Pencil className="h-4 w-4 mr-1" /> Editar
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => { setDeletingAlunoId(aluno.id); setIsDeleteDialogOpen(true); }}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
         {/* Add/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingAluno ? "Editar Aluno" : "Adicionar Novo Aluno"}
@@ -636,7 +666,7 @@ const GestaoAlunos = () => {
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4 py-4">
                 <h3 className="font-semibold">Dados do Aluno</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="nome_completo">Nome Completo *</Label>
                     <Input
@@ -647,7 +677,7 @@ const GestaoAlunos = () => {
                     {errors.nome_completo && <p className="text-sm text-destructive mt-1">{errors.nome_completo}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="numero_matricula">Número de Matrícula *</Label>
+                    <Label htmlFor="numero_matricula">Nº de Matrícula *</Label>
                     <Input
                       id="numero_matricula"
                       value={formData.numero_matricula}
@@ -656,7 +686,7 @@ const GestaoAlunos = () => {
                     {errors.numero_matricula && <p className="text-sm text-destructive mt-1">{errors.numero_matricula}</p>}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="email">Email *</Label>
                     <Input
@@ -667,7 +697,7 @@ const GestaoAlunos = () => {
                       disabled={!!editingAluno}
                     />
                     {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
-                    {!!editingAluno && <p className="text-xs text-muted-foreground mt-1">O email não pode ser alterado após a criação</p>}
+                    {!!editingAluno && <p className="text-xs text-muted-foreground mt-1">O email não pode ser alterado</p>}
                   </div>
                   {!editingAluno && (
                     <div>
@@ -683,7 +713,7 @@ const GestaoAlunos = () => {
                     </div>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="telefone">Telefone *</Label>
                     <Input
@@ -693,8 +723,6 @@ const GestaoAlunos = () => {
                     />
                     {errors.telefone && <p className="text-sm text-destructive mt-1">{errors.telefone}</p>}
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="bi">BI *</Label>
                     <Input
@@ -704,6 +732,8 @@ const GestaoAlunos = () => {
                     />
                     {errors.bi && <p className="text-sm text-destructive mt-1">{errors.bi}</p>}
                   </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="data_nascimento">Data de Nascimento *</Label>
                     <Input
@@ -714,6 +744,25 @@ const GestaoAlunos = () => {
                     />
                     {errors.data_nascimento && <p className="text-sm text-destructive mt-1">{errors.data_nascimento}</p>}
                   </div>
+                  <div>
+                    <Label htmlFor="estado">Estado do Aluno *</Label>
+                    <Select 
+                      value={formData.estado} 
+                      onValueChange={(value: 'activo' | 'transferido' | 'concluido' | 'desistente') => setFormData({ ...formData, estado: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ESTADO_ALUNO_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.estado && <p className="text-sm text-destructive mt-1">{errors.estado}</p>}
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="endereco">Endereço *</Label>
@@ -723,28 +772,6 @@ const GestaoAlunos = () => {
                     onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
                   />
                   {errors.endereco && <p className="text-sm text-destructive mt-1">{errors.endereco}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="estado">Estado do Aluno *</Label>
-                  <Select 
-                    value={formData.estado} 
-                    onValueChange={(value: 'activo' | 'transferido' | 'concluido' | 'desistente') => setFormData({ ...formData, estado: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecionar estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ESTADO_ALUNO_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.estado && <p className="text-sm text-destructive mt-1">{errors.estado}</p>}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Valores permitidos: Activo, Transferido, Concluído, Desistente
-                  </p>
                 </div>
                 <div>
                   <Label htmlFor="turma_id">Turma</Label>
@@ -762,8 +789,8 @@ const GestaoAlunos = () => {
                   </Select>
                 </div>
 
-                <h3 className="font-semibold mt-4">Dados do Encarregado de Educação</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <h3 className="font-semibold mt-4">Dados do Encarregado</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="encarregado_nome">Nome do Encarregado *</Label>
                     <Input
@@ -774,7 +801,7 @@ const GestaoAlunos = () => {
                     {errors.encarregado_nome && <p className="text-sm text-destructive mt-1">{errors.encarregado_nome}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="encarregado_telefone">Telefone do Encarregado *</Label>
+                    <Label htmlFor="encarregado_telefone">Telefone *</Label>
                     <Input
                       id="encarregado_telefone"
                       value={formData.encarregado_telefone}
@@ -794,11 +821,11 @@ const GestaoAlunos = () => {
                   {errors.encarregado_parentesco && <p className="text-sm text-destructive mt-1">{errors.encarregado_parentesco}</p>}
                 </div>
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
+              <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                   {isSubmitting ? "A processar..." : (editingAluno ? "Atualizar" : "Adicionar")}
                 </Button>
               </DialogFooter>
@@ -826,7 +853,7 @@ const GestaoAlunos = () => {
 
         {/* Histórico Dialog */}
         <Dialog open={isHistoricoOpen} onOpenChange={setIsHistoricoOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Histórico Escolar</DialogTitle>
               <DialogDescription>
@@ -837,36 +864,69 @@ const GestaoAlunos = () => {
               {historicoNotas.length === 0 ? (
                 <p className="text-center text-muted-foreground">Nenhuma nota registrada ainda</p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Ano Lectivo</TableHead>
-                      <TableHead>Disciplina</TableHead>
-                      <TableHead>Trim.</TableHead>
-                      <TableHead>AS1</TableHead>
-                      <TableHead>AS2</TableHead>
-                      <TableHead>AS3</TableHead>
-                      <TableHead>MAS</TableHead>
-                      <TableHead>AT</TableHead>
-                      <TableHead>MT</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Ano</TableHead>
+                          <TableHead>Disciplina</TableHead>
+                          <TableHead>T</TableHead>
+                          <TableHead>AS1</TableHead>
+                          <TableHead>AS2</TableHead>
+                          <TableHead>AS3</TableHead>
+                          <TableHead>MAS</TableHead>
+                          <TableHead>AT</TableHead>
+                          <TableHead>MT</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {historicoNotas.map((nota) => (
+                          <TableRow key={nota.id}>
+                            <TableCell className="text-xs">{nota.anos_lectivos.ano}</TableCell>
+                            <TableCell className="text-xs">{nota.disciplinas.nome}</TableCell>
+                            <TableCell>{nota.trimestre}º</TableCell>
+                            <TableCell>{nota.nota_as1 ?? "-"}</TableCell>
+                            <TableCell>{nota.nota_as2 ?? "-"}</TableCell>
+                            <TableCell>{nota.nota_as3 ?? "-"}</TableCell>
+                            <TableCell>{nota.media_as ?? "-"}</TableCell>
+                            <TableCell>{nota.nota_at ?? "-"}</TableCell>
+                            <TableCell className="font-semibold">{nota.media_trimestral ?? "-"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {/* Mobile Cards */}
+                  <div className="sm:hidden space-y-3">
                     {historicoNotas.map((nota) => (
-                      <TableRow key={nota.id}>
-                        <TableCell>{nota.anos_lectivos.ano}</TableCell>
-                        <TableCell>{nota.disciplinas.nome}</TableCell>
-                        <TableCell>{nota.trimestre}º</TableCell>
-                        <TableCell>{nota.nota_as1 ?? "-"}</TableCell>
-                        <TableCell>{nota.nota_as2 ?? "-"}</TableCell>
-                        <TableCell>{nota.nota_as3 ?? "-"}</TableCell>
-                        <TableCell>{nota.media_as ?? "-"}</TableCell>
-                        <TableCell>{nota.nota_at ?? "-"}</TableCell>
-                        <TableCell className="font-semibold">{nota.media_trimestral ?? "-"}</TableCell>
-                      </TableRow>
+                      <div key={nota.id} className="border rounded-lg p-3 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-sm">{nota.disciplinas.nome}</p>
+                            <p className="text-xs text-muted-foreground">{nota.anos_lectivos.ano} - {nota.trimestre}º Trim</p>
+                          </div>
+                          <span className="font-bold text-lg">{nota.media_trimestral ?? "-"}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-xs text-center">
+                          <div className="bg-muted rounded p-1">
+                            <span className="text-muted-foreground">AS1</span>
+                            <p className="font-medium">{nota.nota_as1 ?? "-"}</p>
+                          </div>
+                          <div className="bg-muted rounded p-1">
+                            <span className="text-muted-foreground">AS2</span>
+                            <p className="font-medium">{nota.nota_as2 ?? "-"}</p>
+                          </div>
+                          <div className="bg-muted rounded p-1">
+                            <span className="text-muted-foreground">AS3</span>
+                            <p className="font-medium">{nota.nota_as3 ?? "-"}</p>
+                          </div>
+                        </div>
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                </>
               )}
             </div>
           </DialogContent>

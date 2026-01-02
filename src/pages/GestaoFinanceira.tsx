@@ -354,23 +354,25 @@ const GestaoFinanceira = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-between items-center mb-6">
+      <div className="container mx-auto py-4 sm:py-8 px-2 sm:px-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Gestão Financeira</h1>
-            <p className="text-muted-foreground">Controle de receitas e despesas da escola</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">Gestão Financeira</h1>
+            <p className="text-muted-foreground text-sm">Controle de receitas e despesas</p>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="transacoes" className="gap-2">
+          <TabsList className="w-full sm:w-auto flex">
+            <TabsTrigger value="transacoes" className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm">
               <DollarSign className="h-4 w-4" />
-              Transações
+              <span className="hidden sm:inline">Transações</span>
+              <span className="sm:hidden">Trans.</span>
             </TabsTrigger>
-            <TabsTrigger value="confirmacao" className="gap-2">
+            <TabsTrigger value="confirmacao" className="gap-1 sm:gap-2 flex-1 sm:flex-none text-xs sm:text-sm">
               <CreditCard className="h-4 w-4" />
-              Confirmação de Pagamentos
+              <span className="hidden sm:inline">Confirmação</span>
+              <span className="sm:hidden">Conf.</span>
               {pendingCount > 0 && (
                 <Badge variant="destructive" className="ml-1 h-5 px-1.5">
                   {pendingCount}
@@ -381,14 +383,14 @@ const GestaoFinanceira = () => {
 
           <TabsContent value="transacoes" className="space-y-6">
             <div className="flex justify-end">
-              <Button onClick={() => setIsDialogOpen(true)}>
+              <Button onClick={() => setIsDialogOpen(true)} className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 Nova Transação
               </Button>
             </div>
 
         {/* Resumo Financeiro */}
-        <div className="grid gap-4 md:grid-cols-3 mb-6">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Saldo Atual</CardTitle>
@@ -434,7 +436,6 @@ const GestaoFinanceira = () => {
             </CardContent>
           </Card>
         </div>
-
         {/* Filtros */}
         <Card className="mb-6">
           <CardHeader>
@@ -444,7 +445,7 @@ const GestaoFinanceira = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
               <div>
                 <Label>Tipo de Transação</Label>
                 <Select value={filtroTipo} onValueChange={setFiltroTipo}>
@@ -489,7 +490,8 @@ const GestaoFinanceira = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -497,15 +499,13 @@ const GestaoFinanceira = () => {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Descrição</TableHead>
-                    <TableHead>Aluno</TableHead>
-                    <TableHead>Registrado por</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transacoesFiltradas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
                         Nenhuma transação encontrada
                       </TableCell>
                     </TableRow>
@@ -528,23 +528,6 @@ const GestaoFinanceira = () => {
                         <TableCell className="max-w-xs truncate">
                           {transacao.descricao}
                         </TableCell>
-                        <TableCell>
-                          {transacao.alunos ? (
-                            <div>
-                              <div className="font-medium">
-                                {transacao.alunos.profiles?.nome_completo || "N/A"}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {transacao.alunos.numero_matricula}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {transacao.profiles?.nome_completo || "N/A"}
-                        </TableCell>
                         <TableCell className={`text-right font-semibold ${
                           transacao.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'
                         }`}>
@@ -555,6 +538,46 @@ const GestaoFinanceira = () => {
                   )}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden space-y-3">
+              {transacoesFiltradas.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma transação encontrada
+                </div>
+              ) : (
+                transacoesFiltradas.map((transacao) => (
+                  <div key={transacao.id} className="border rounded-lg p-4 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          transacao.tipo === 'entrada' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {transacao.tipo === 'entrada' ? 'Entrada' : 'Saída'}
+                        </span>
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {categoriaLabels[transacao.categoria] || transacao.categoria}
+                        </span>
+                      </div>
+                      <span className={`font-bold ${
+                        transacao.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transacao.tipo === 'entrada' ? '+' : '-'}{formatarMoeda(Number(transacao.valor))}
+                      </span>
+                    </div>
+                    <p className="text-sm">{transacao.descricao}</p>
+                    <div className="flex justify-between text-xs text-muted-foreground pt-1 border-t">
+                      <span>{formatarData(transacao.data_transacao)}</span>
+                      {transacao.alunos && (
+                        <span>{transacao.alunos.profiles?.nome_completo || transacao.alunos.numero_matricula}</span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -568,7 +591,7 @@ const GestaoFinanceira = () => {
 
         {/* Dialog para Nova Transação */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Nova Transação</DialogTitle>
               <DialogDescription>
@@ -577,7 +600,7 @@ const GestaoFinanceira = () => {
             </DialogHeader>
             <form onSubmit={handleSubmit}>
               <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="tipo">Tipo *</Label>
                     <Select 
@@ -617,7 +640,7 @@ const GestaoFinanceira = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="valor">Valor (MZN) *</Label>
                     <Input
@@ -685,11 +708,11 @@ const GestaoFinanceira = () => {
                   />
                 </div>
               </div>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="w-full sm:w-auto">
                   Registrar Transação
                 </Button>
               </DialogFooter>

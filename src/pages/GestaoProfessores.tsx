@@ -330,16 +330,16 @@ const GestaoProfessores = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/administrativo")}>
+      <div className="space-y-6 px-2 sm:px-0">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/administrativo")} className="w-fit">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Gestão de Professores</h1>
-              <p className="text-muted-foreground">Gerir professores do sistema</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Gestão de Professores</h1>
+              <p className="text-muted-foreground text-sm">Gerir professores do sistema</p>
             </div>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -347,13 +347,13 @@ const GestaoProfessores = () => {
             else handleCloseDialog();
           }}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full sm:w-auto">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Alocar Professor
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
+            <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader className="text-left">
                 <DialogTitle>
                   {editingProfessor ? "Editar Professor" : "Alocar Professor"}
                 </DialogTitle>
@@ -403,7 +403,7 @@ const GestaoProfessores = () => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="numero_funcionario"
@@ -470,13 +470,14 @@ const GestaoProfessores = () => {
                       )}
                     />
                   </div>
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={handleCloseDialog}>
+                  <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                    <Button type="button" variant="outline" onClick={handleCloseDialog} className="w-full sm:w-auto">
                       Cancelar
                     </Button>
                     <Button 
                       type="submit"
                       disabled={!editingProfessor && (!selectedUserId || availableUsers.length === 0)}
+                      className="w-full sm:w-auto"
                     >
                       {editingProfessor ? "Atualizar" : "Alocar"}
                     </Button>
@@ -503,74 +504,134 @@ const GestaoProfessores = () => {
               <div className="text-center py-8">
                 <p className="text-muted-foreground">Nenhum professor alocado.</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Para alocar um professor, primeiro atribua a role "professor" ao utilizador em "Atribuir Roles".
+                  Para alocar um professor, primeiro atribua a role "professor".
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Número</TableHead>
-                    <TableHead>Habilitação</TableHead>
-                    <TableHead>Especialidade</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {professores.map((professor) => (
-                    <TableRow key={professor.id}>
-                      <TableCell className="font-medium">
-                        {professor.profiles.nome_completo}
-                      </TableCell>
-                      <TableCell>{professor.profiles.email}</TableCell>
-                      <TableCell>{professor.numero_funcionario}</TableCell>
-                      <TableCell>{professor.habilitacao}</TableCell>
-                      <TableCell>{professor.especialidade || "-"}</TableCell>
-                      <TableCell>{professor.categoria || "-"}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(professor)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="h-4 w-4 text-destructive" />
+              <>
+                {/* Desktop Table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Número</TableHead>
+                        <TableHead>Habilitação</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {professores.map((professor) => (
+                        <TableRow key={professor.id}>
+                          <TableCell className="font-medium">
+                            {professor.profiles.nome_completo}
+                          </TableCell>
+                          <TableCell className="text-sm">{professor.profiles.email}</TableCell>
+                          <TableCell>{professor.numero_funcionario}</TableCell>
+                          <TableCell>{professor.habilitacao}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => handleEdit(professor)}>
+                                <Pencil className="h-4 w-4" />
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar remoção</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja remover o professor{" "}
-                                  <strong>{professor.profiles.nome_completo}</strong>?
-                                  O utilizador continuará com a role "professor" mas não estará mais alocado.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(professor)}
-                                  className="bg-destructive hover:bg-destructive/90"
-                                >
-                                  Remover
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="w-[95vw] max-w-md">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirmar remoção</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Remover <strong>{professor.profiles.nome_completo}</strong>?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                                    <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDelete(professor)}
+                                      className="w-full sm:w-auto bg-destructive hover:bg-destructive/90"
+                                    >
+                                      Remover
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                  {professores.map((professor) => (
+                    <div key={professor.id} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-semibold">{professor.profiles.nome_completo}</p>
+                          <p className="text-sm text-muted-foreground">{professor.profiles.email}</p>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Número:</span>
+                          <p>{professor.numero_funcionario}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Habilitação:</span>
+                          <p>{professor.habilitacao}</p>
+                        </div>
+                        {professor.especialidade && (
+                          <div>
+                            <span className="text-muted-foreground">Especialidade:</span>
+                            <p>{professor.especialidade}</p>
+                          </div>
+                        )}
+                        {professor.categoria && (
+                          <div>
+                            <span className="text-muted-foreground">Categoria:</span>
+                            <p>{professor.categoria}</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex justify-end gap-1 pt-2 border-t">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(professor)}>
+                          <Pencil className="h-4 w-4 mr-1" /> Editar
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="w-[95vw] max-w-md">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmar remoção</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Remover <strong>{professor.profiles.nome_completo}</strong>?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+                              <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(professor)}
+                                className="w-full sm:w-auto bg-destructive hover:bg-destructive/90"
+                              >
+                                Remover
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
