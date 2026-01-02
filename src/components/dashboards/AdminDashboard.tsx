@@ -191,25 +191,32 @@ export const AdminDashboard = () => {
             <CardTitle className="text-base sm:text-lg">Distribuição de Alunos por Classe</CardTitle>
           </CardHeader>
           <CardContent className="p-2 sm:p-6">
-            <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ classe, total }) => `${classe}: ${total}`}
-                  outerRadius={60}
-                  fill="#8884d8"
-                  dataKey="total"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="h-[200px] sm:h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ classe, total, percent }) => window.innerWidth < 640 ? `${total}` : `${classe}: ${total}`}
+                    outerRadius={window.innerWidth < 640 ? 50 : 80}
+                    fill="#8884d8"
+                    dataKey="total"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '10px' }} 
+                    layout="horizontal"
+                    verticalAlign="bottom"
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -220,15 +227,24 @@ export const AdminDashboard = () => {
             <CardTitle className="text-base sm:text-lg">Alunos por Turma</CardTitle>
           </CardHeader>
           <CardContent className="p-2 sm:p-6">
-            <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
-              <BarChart data={turmaData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="nome" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="alunos" fill="#3b82f6" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[200px] sm:h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={turmaData} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="nome" 
+                    tick={{ fontSize: 9 }} 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={50}
+                    interval={0}
+                  />
+                  <YAxis tick={{ fontSize: 10 }} width={30} />
+                  <Tooltip />
+                  <Bar dataKey="alunos" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
@@ -237,17 +253,29 @@ export const AdminDashboard = () => {
             <CardTitle className="text-base sm:text-lg">Visão Financeira por Categoria</CardTitle>
           </CardHeader>
           <CardContent className="p-2 sm:p-6">
-            <ResponsiveContainer width="100%" height={220} className="sm:!h-[300px]">
-              <BarChart data={financeData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="categoria" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value) => `${Number(value).toLocaleString()} MZN`} />
-                <Legend wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="entrada" fill="#10b981" name="Entradas" />
-                <Bar dataKey="saida" fill="#ef4444" name="Saídas" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[220px] sm:h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={financeData} margin={{ top: 10, right: 10, left: -10, bottom: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="categoria" 
+                    tick={{ fontSize: 8 }} 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={60}
+                    interval={0}
+                  />
+                  <YAxis tick={{ fontSize: 9 }} width={35} tickFormatter={(value) => `${(value/1000).toFixed(0)}k`} />
+                  <Tooltip formatter={(value) => `${Number(value).toLocaleString()} MZN`} />
+                  <Legend 
+                    wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} 
+                    iconSize={10}
+                  />
+                  <Bar dataKey="entrada" fill="#10b981" name="Entradas" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="saida" fill="#ef4444" name="Saídas" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

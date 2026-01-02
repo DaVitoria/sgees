@@ -254,67 +254,67 @@ export const SecretarioDashboard = () => {
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard do Secretário</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">Dashboard do Secretário</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
           Bem-vindo ao painel de gestão. Aceda às funcionalidades administrativas e pedagógicas abaixo.
         </p>
       </div>
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
         {statisticsCards.map((stat) => (
           <Card
             key={stat.title}
             className={`relative overflow-hidden cursor-pointer transition-all hover:shadow-md ${stat.highlight ? "ring-2 ring-orange-400 animate-pulse" : ""}`}
             onClick={() => stat.action && stat.action()}
           >
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardDescription className="text-sm font-medium">{stat.title}</CardDescription>
-                <div className={`p-2 rounded-lg ${stat.bgColor}`}>
-                  <stat.icon className={`h-4 w-4 ${stat.color}`} />
+            <CardHeader className="p-2 sm:p-3 lg:pb-2">
+              <div className="flex items-center justify-between gap-1">
+                <CardDescription className="text-xs sm:text-sm font-medium truncate">{stat.title}</CardDescription>
+                <div className={`p-1.5 sm:p-2 rounded-lg ${stat.bgColor} flex-shrink-0`}>
+                  <stat.icon className={`h-3 w-3 sm:h-4 sm:w-4 ${stat.color}`} />
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${stat.color}`}>
+            <CardContent className="p-2 sm:p-3 pt-0">
+              <div className={`text-base sm:text-xl lg:text-2xl font-bold ${stat.color} truncate`}>
                 {loading ? "..." : stat.value}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 truncate">{stat.description}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Área Administrativa */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center gap-2">
-          <Building2 className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Área Administrativa</h2>
+          <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Área Administrativa</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
           {administrativeModules.map((module) => (
             <Card
               key={module.title}
               className="hover:shadow-lg transition-all duration-300 cursor-pointer group border-border/50 hover:border-primary/30"
               onClick={() => navigate(module.path)}
             >
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${module.bgColor} group-hover:scale-110 transition-transform`}>
-                    <module.icon className={`h-5 w-5 ${module.color}`} />
+              <CardHeader className="p-2 sm:p-3 lg:pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                  <div className={`p-1.5 sm:p-2 rounded-lg ${module.bgColor} group-hover:scale-110 transition-transform w-fit`}>
+                    <module.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${module.color}`} />
                   </div>
-                  <CardTitle className="text-lg">{module.title}</CardTitle>
+                  <CardTitle className="text-sm sm:text-base lg:text-lg">{module.title}</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
-                <CardDescription className="text-sm">{module.description}</CardDescription>
+              <CardContent className="p-2 sm:p-3 pt-0">
+                <CardDescription className="text-xs sm:text-sm hidden sm:block">{module.description}</CardDescription>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  className="mt-1 sm:mt-3 w-full text-xs sm:text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                 >
                   Aceder
                 </Button>
@@ -325,32 +325,32 @@ export const SecretarioDashboard = () => {
       </div>
 
       {/* Área Pedagógica */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         <div className="flex items-center gap-2">
-          <GraduationCap className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Área Pedagógica</h2>
+          <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Área Pedagógica</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
           {pedagogicalModules.map((module) => (
             <Card
               key={module.title}
               className="hover:shadow-lg transition-all duration-300 cursor-pointer group border-border/50 hover:border-primary/30"
               onClick={() => navigate(module.path)}
             >
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${module.bgColor} group-hover:scale-110 transition-transform`}>
-                    <module.icon className={`h-5 w-5 ${module.color}`} />
+              <CardHeader className="p-2 sm:p-3 lg:pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                  <div className={`p-1.5 sm:p-2 rounded-lg ${module.bgColor} group-hover:scale-110 transition-transform w-fit`}>
+                    <module.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${module.color}`} />
                   </div>
-                  <CardTitle className="text-lg">{module.title}</CardTitle>
+                  <CardTitle className="text-sm sm:text-base lg:text-lg">{module.title}</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent>
-                <CardDescription className="text-sm">{module.description}</CardDescription>
+              <CardContent className="p-2 sm:p-3 pt-0">
+                <CardDescription className="text-xs sm:text-sm hidden sm:block">{module.description}</CardDescription>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="mt-3 w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                  className="mt-1 sm:mt-3 w-full text-xs sm:text-sm group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                 >
                   Aceder
                 </Button>

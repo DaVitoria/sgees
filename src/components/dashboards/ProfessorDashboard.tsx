@@ -152,119 +152,132 @@ export const ProfessorDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Dashboard do Professor</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2">Dashboard do Professor</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Gerir as suas turmas e disciplinas
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-4">
-        <Card className="p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-100 p-2 rounded">
-              <BookOpen className="h-6 w-6 text-blue-600" />
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card className="p-3 sm:p-4 lg:p-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="bg-blue-100 p-2 rounded flex-shrink-0">
+              <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Turmas</p>
-              <p className="text-2xl font-bold">{stats.totalTurmas}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-green-100 p-2 rounded">
-              <Users className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total de Alunos</p>
-              <p className="text-2xl font-bold">{stats.totalAlunos}</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Turmas</p>
+              <p className="text-lg sm:text-xl lg:text-2xl font-bold">{stats.totalTurmas}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-purple-100 p-2 rounded">
-              <ClipboardList className="h-6 w-6 text-purple-600" />
+        <Card className="p-3 sm:p-4 lg:p-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="bg-green-100 p-2 rounded flex-shrink-0">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Disciplinas</p>
-              <p className="text-2xl font-bold">{stats.totalDisciplinas}</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Total Alunos</p>
+              <p className="text-lg sm:text-xl lg:text-2xl font-bold">{stats.totalAlunos}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-orange-100 p-2 rounded">
-              <TrendingUp className="h-6 w-6 text-orange-600" />
+        <Card className="p-3 sm:p-4 lg:p-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="bg-purple-100 p-2 rounded flex-shrink-0">
+              <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Média Geral</p>
-              <p className="text-2xl font-bold">{stats.mediaGeral}/20</p>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Disciplinas</p>
+              <p className="text-lg sm:text-xl lg:text-2xl font-bold">{stats.totalDisciplinas}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-3 sm:p-4 lg:p-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="bg-orange-100 p-2 rounded flex-shrink-0">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-orange-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Média Geral</p>
+              <p className="text-lg sm:text-xl lg:text-2xl font-bold">{stats.mediaGeral}/20</p>
             </div>
           </div>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>Desempenho por Trimestre</CardTitle>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg">Desempenho por Trimestre</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={performanceData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="trimestre" />
-                <YAxis domain={[0, 20]} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="media" stroke="#3b82f6" strokeWidth={2} name="Média Trimestral (MT)" />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent className="p-2 sm:p-6">
+            <div className="h-[200px] sm:h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={performanceData} margin={{ top: 10, right: 10, left: -10, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="trimestre" tick={{ fontSize: 10 }} />
+                  <YAxis domain={[0, 20]} tick={{ fontSize: 10 }} width={30} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: '10px' }} iconSize={10} />
+                  <Line type="monotone" dataKey="media" stroke="#3b82f6" strokeWidth={2} name="Média (MT)" dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Alunos por Turma</CardTitle>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-base sm:text-lg">Alunos por Turma</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={turmas}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="nome" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="alunos" fill="#10b981" />
-              </BarChart>
-            </ResponsiveContainer>
+          <CardContent className="p-2 sm:p-6">
+            <div className="h-[200px] sm:h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={turmas} margin={{ top: 10, right: 10, left: -10, bottom: 30 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="nome" 
+                    tick={{ fontSize: 9 }} 
+                    angle={-45} 
+                    textAnchor="end" 
+                    height={50}
+                    interval={0}
+                  />
+                  <YAxis tick={{ fontSize: 10 }} width={30} />
+                  <Tooltip />
+                  <Bar dataKey="alunos" fill="#10b981" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {directorTurmas.length > 0 && (
-        <Card className="p-6 border-2 border-primary/20 bg-primary/5">
-          <div className="flex justify-between items-center mb-4">
+        <Card className="p-3 sm:p-6 border-2 border-primary/20 bg-primary/5">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
             <div className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold">Director de Turma</h3>
+              <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+              <h3 className="text-base sm:text-lg font-semibold">Director de Turma</h3>
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {directorTurmas.map((dt) => (
-              <Card key={dt.turma_id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
+              <Card key={dt.turma_id} className="p-3 sm:p-4 hover:shadow-md transition-shadow">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
                   <div>
-                    <h4 className="font-medium">{dt.classe}ª Classe - {dt.turma_nome}</h4>
-                    <p className="text-sm text-muted-foreground">Turma sob sua direcção</p>
+                    <h4 className="font-medium text-sm sm:text-base">{dt.classe}ª Classe - {dt.turma_nome}</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Turma sob sua direcção</p>
                   </div>
                   <Button 
                     onClick={() => navigate(`/director-turma?turma=${dt.turma_id}`)}
+                    size="sm"
+                    className="w-full sm:w-auto"
                   >
                     Gerir Turma
                   </Button>
@@ -275,30 +288,30 @@ export const ProfessorDashboard = () => {
         </Card>
       )}
 
-      <Card className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Minhas Turmas</h3>
-          <Button onClick={() => navigate("/pedagogico/lancamento-notas")} size="sm">
+      <Card className="p-3 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 sm:mb-4">
+          <h3 className="text-base sm:text-lg font-semibold">Minhas Turmas</h3>
+          <Button onClick={() => navigate("/pedagogico/lancamento-notas")} size="sm" className="w-full sm:w-auto">
             Lançar Notas
           </Button>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {turmas.length === 0 ? (
-            <p className="text-muted-foreground text-center py-4">Nenhuma turma atribuída</p>
+            <p className="text-muted-foreground text-center py-4 text-sm">Nenhuma turma atribuída</p>
           ) : (
             turmas.map((turma, index) => (
-              <Card key={index} className="p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium">{turma.nome}</h4>
-                    <p className="text-sm text-muted-foreground">{turma.disciplinas?.join(", ")}</p>
+              <Card key={index} className="p-3 sm:p-4 hover:shadow-md transition-shadow">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium text-sm sm:text-base">{turma.nome}</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate">{turma.disciplinas?.join(", ")}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{turma.alunos} alunos</p>
+                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
+                    <p className="text-xs sm:text-sm font-medium">{turma.alunos} alunos</p>
                     <Button 
                       variant="ghost" 
-                      size="sm" 
-                      className="mt-1"
+                      size="sm"
+                      className="text-xs sm:text-sm"
                       onClick={() => navigate(`/pedagogico/gestao-turmas/${turma.id}`)}
                     >
                       Ver Turma
