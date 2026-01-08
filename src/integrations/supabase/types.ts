@@ -193,7 +193,7 @@ export type Database = {
       disciplinas: {
         Row: {
           carga_horaria: number | null
-          classe: number
+          classe: number | null
           codigo: string
           created_at: string | null
           descricao: string | null
@@ -202,7 +202,7 @@ export type Database = {
         }
         Insert: {
           carga_horaria?: number | null
-          classe: number
+          classe?: number | null
           codigo: string
           created_at?: string | null
           descricao?: string | null
@@ -211,7 +211,7 @@ export type Database = {
         }
         Update: {
           carga_horaria?: number | null
-          classe?: number
+          classe?: number | null
           codigo?: string
           created_at?: string | null
           descricao?: string | null
