@@ -68,7 +68,8 @@ const Dashboard = () => {
       case 'tesoureiro':
         return <FuncionarioDashboard />;
       default:
-        return <AdminDashboard />;
+        // Utilizadores sem role vêem dashboard limitado (sem dados financeiros e alertas)
+        return <AdminDashboard hideFinancialData />;
     }
   };
 

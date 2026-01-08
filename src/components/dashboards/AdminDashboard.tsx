@@ -7,7 +7,11 @@ import { AlertasPanel } from "@/components/AlertasPanel";
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4'];
 
-export const AdminDashboard = () => {
+interface AdminDashboardProps {
+  hideFinancialData?: boolean;
+}
+
+export const AdminDashboard = ({ hideFinancialData = false }: AdminDashboardProps) => {
   const [stats, setStats] = useState({
     totalAlunos: 0,
     totalProfessores: 0,
@@ -104,13 +108,14 @@ export const AdminDashboard = () => {
     }
   };
 
-  const statCards = [
+  const allStatCards = [
     {
       title: "Total de Alunos",
       value: stats.totalAlunos,
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
+      isFinancial: false,
     },
     {
       title: "Professores Ativos",
@@ -118,6 +123,7 @@ export const AdminDashboard = () => {
       icon: GraduationCap,
       color: "text-green-600",
       bgColor: "bg-green-100",
+      isFinancial: false,
     },
     {
       title: "Saldo Actual",
@@ -125,6 +131,7 @@ export const AdminDashboard = () => {
       icon: DollarSign,
       color: "text-yellow-600",
       bgColor: "bg-yellow-100",
+      isFinancial: true,
     },
     {
       title: "Aproveitamento Médio",
@@ -132,6 +139,7 @@ export const AdminDashboard = () => {
       icon: TrendingUp,
       color: "text-purple-600",
       bgColor: "bg-purple-100",
+      isFinancial: false,
     },
     {
       title: "Turmas Ativas",
@@ -139,6 +147,7 @@ export const AdminDashboard = () => {
       icon: BookOpen,
       color: "text-indigo-600",
       bgColor: "bg-indigo-100",
+      isFinancial: false,
     },
     {
       title: "Funcionários",
@@ -146,8 +155,13 @@ export const AdminDashboard = () => {
       icon: Building2,
       color: "text-red-600",
       bgColor: "bg-red-100",
+      isFinancial: false,
     },
   ];
+
+  const statCards = hideFinancialData 
+    ? allStatCards.filter(card => !card.isFinancial)
+    : allStatCards;
 
   if (loading) {
     return (
@@ -182,9 +196,9 @@ export const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Alertas Panel */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-        <AlertasPanel />
+      {/* Alertas Panel e Distribuição */}
+      <div className={`grid gap-4 sm:gap-6 grid-cols-1 ${hideFinancialData ? '' : 'lg:grid-cols-2'}`}>
+        {!hideFinancialData && <AlertasPanel />}
         
         <Card>
           <CardHeader className="pb-2 sm:pb-4">
@@ -221,7 +235,7 @@ export const AdminDashboard = () => {
         </Card>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+      <div className={`grid gap-4 sm:gap-6 grid-cols-1 ${hideFinancialData ? '' : 'lg:grid-cols-2'}`}>
         <Card>
           <CardHeader className="pb-2 sm:pb-4">
             <CardTitle className="text-base sm:text-lg">Alunos por Turma</CardTitle>
@@ -248,36 +262,38 @@ export const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2 sm:pb-4">
-            <CardTitle className="text-base sm:text-lg">Visão Financeira por Categoria</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2 sm:p-6">
-            <div className="h-[220px] sm:h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={financeData} margin={{ top: 10, right: 10, left: -10, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="categoria" 
-                    tick={{ fontSize: 8 }} 
-                    angle={-45} 
-                    textAnchor="end" 
-                    height={60}
-                    interval={0}
-                  />
-                  <YAxis tick={{ fontSize: 9 }} width={35} tickFormatter={(value) => `${(value/1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(value) => `${Number(value).toLocaleString()} MZN`} />
-                  <Legend 
-                    wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} 
-                    iconSize={10}
-                  />
-                  <Bar dataKey="entrada" fill="#10b981" name="Entradas" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="saida" fill="#ef4444" name="Saídas" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+        {!hideFinancialData && (
+          <Card>
+            <CardHeader className="pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Visão Financeira por Categoria</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2 sm:p-6">
+              <div className="h-[220px] sm:h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={financeData} margin={{ top: 10, right: 10, left: -10, bottom: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="categoria" 
+                      tick={{ fontSize: 8 }} 
+                      angle={-45} 
+                      textAnchor="end" 
+                      height={60}
+                      interval={0}
+                    />
+                    <YAxis tick={{ fontSize: 9 }} width={35} tickFormatter={(value) => `${(value/1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(value) => `${Number(value).toLocaleString()} MZN`} />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} 
+                      iconSize={10}
+                    />
+                    <Bar dataKey="entrada" fill="#10b981" name="Entradas" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="saida" fill="#ef4444" name="Saídas" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
