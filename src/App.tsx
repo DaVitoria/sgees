@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Administrativo from "./pages/Administrativo";
 import Pedagogico from "./pages/Pedagogico";
@@ -23,6 +25,7 @@ import Aprovacoes from "./pages/pedagogico/Aprovacoes";
 import GestaoExames from "./pages/pedagogico/GestaoExames";
 import GestaoTrimestres from "./pages/pedagogico/GestaoTrimestres";
 import GestaoDisciplinas from "./pages/pedagogico/GestaoDisciplinas";
+import GestaoAnosLectivos from "./pages/pedagogico/GestaoAnosLectivos";
 import GestaoProfessores from "./pages/GestaoProfessores";
 import GestaoAlunos from "./pages/GestaoAlunos";
 import GestaoFinanceira from "./pages/GestaoFinanceira";
@@ -48,6 +51,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auto-matricula" element={<AutoMatricula />} />
             <Route path="/acompanhamento-matricula" element={<AcompanhamentoMatricula />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -63,6 +68,7 @@ const App = () => (
             <Route path="/pedagogico/gestao-exames" element={<GestaoExames />} />
             <Route path="/pedagogico/gestao-trimestres" element={<GestaoTrimestres />} />
             <Route path="/pedagogico/gestao-disciplinas" element={<GestaoDisciplinas />} />
+            <Route path="/pedagogico/gestao-anos-lectivos" element={<GestaoAnosLectivos />} />
             <Route path="/aluno" element={<Aluno />} />
             <Route path="/professor" element={<Professor />} />
             <Route path="/director-turma" element={<DirectorTurma />} />

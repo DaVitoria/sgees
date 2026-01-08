@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Calendar, ClipboardCheck, BarChart3, FileCheck, GraduationCap } from "lucide-react";
+import { BookOpen, Calendar, ClipboardCheck, BarChart3, FileCheck, GraduationCap, CalendarDays } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const Pedagogico = () => {
@@ -33,6 +33,15 @@ const Pedagogico = () => {
       color: "text-secondary",
       bgColor: "bg-secondary/10",
       route: "/pedagogico/gestao-disciplinas",
+      allowedRoles: ["admin", "secretario"],
+    },
+    {
+      title: "Gestão de Anos Lectivos",
+      description: "Criar e gerir anos lectivos do sistema",
+      icon: CalendarDays,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+      route: "/pedagogico/gestao-anos-lectivos",
       allowedRoles: ["admin", "secretario"],
     },
     {
