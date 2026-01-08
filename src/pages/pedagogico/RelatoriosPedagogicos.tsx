@@ -7,9 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, FileSpreadsheet } from "lucide-react";
+import { ArrowLeft, FileSpreadsheet, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { exportToExcel } from "@/utils/exportToExcel";
+import { 
+  generateAproveitamentoDisciplinaPDF, 
+  generateAproveitamentoGeralPDF, 
+  generateVerbetesPDF 
+} from "@/utils/generatePedagogicalReportPDF";
 
 interface AlunoNota {
   id: string;
@@ -64,6 +69,7 @@ interface TurmaStats {
 }
 
 type ReportType = "aproveitamento_disciplina" | "aproveitamento_geral" | "verbetes";
+type PeriodoType = "trimestral" | "anual";
 
 const RelatoriosPedagogicos = () => {
   const { user, loading } = useAuth();
@@ -76,6 +82,7 @@ const RelatoriosPedagogicos = () => {
   const [selectedAnoLectivo, setSelectedAnoLectivo] = useState<string>("");
   const [selectedTrimestre, setSelectedTrimestre] = useState<string>("1");
   const [reportType, setReportType] = useState<ReportType>("aproveitamento_disciplina");
+  const [periodoType, setPeriodoType] = useState<PeriodoType>("trimestral");
   
   const [disciplinaStats, setDisciplinaStats] = useState<DisciplinaStats[]>([]);
   const [turmaStats, setTurmaStats] = useState<TurmaStats[]>([]);
@@ -101,10 +108,10 @@ const RelatoriosPedagogicos = () => {
   }, [selectedAnoLectivo]);
 
   useEffect(() => {
-    if (selectedTurma && selectedAnoLectivo) {
+    if (selectedAnoLectivo && (selectedTurma || reportType === "aproveitamento_geral")) {
       fetchReportData();
     }
-  }, [selectedTurma, selectedAnoLectivo, selectedTrimestre, reportType]);
+  }, [selectedTurma, selectedAnoLectivo, selectedTrimestre, reportType, periodoType]);
 
   const fetchInitialData = async () => {
     setLoadingData(true);
@@ -178,11 +185,42 @@ const RelatoriosPedagogicos = () => {
     }
   };
 
+  const getNotasQuery = (alunoIds: string[]) => {
+    let query = supabase
+      .from("notas")
+      .select(`
+        aluno_id,
+        trimestre,
+        media_trimestral,
+        nota_as1,
+        nota_as2,
+        nota_as3,
+        nota_at,
+        media_as,
+        disciplina:disciplinas!fk_notas_disciplina(id, nome)
+      `)
+      .in("aluno_id", alunoIds)
+      .eq("ano_lectivo_id", selectedAnoLectivo);
+
+    if (periodoType === "trimestral") {
+      query = query.eq("trimestre", parseInt(selectedTrimestre));
+    }
+
+    return query;
+  };
+
+  const calculateAnnualAverage = (notas: any[], disciplinaId: string, alunoId: string) => {
+    const notasDisciplina = notas.filter(
+      n => (n.disciplina as any)?.id === disciplinaId && n.aluno_id === alunoId && n.media_trimestral !== null
+    );
+    if (notasDisciplina.length === 0) return null;
+    return notasDisciplina.reduce((acc, n) => acc + (n.media_trimestral || 0), 0) / notasDisciplina.length;
+  };
+
   const fetchAproveitamentoDisciplina = async () => {
     const turmaInfo = turmas.find(t => t.id === selectedTurma);
     if (!turmaInfo) return;
 
-    // Get all students from the class with their profiles
     const { data: alunos, error: alunosError } = await supabase
       .from("alunos")
       .select(`
@@ -200,21 +238,9 @@ const RelatoriosPedagogicos = () => {
       return;
     }
 
-    // Get grades for students
-    const { data: notas, error: notasError } = await supabase
-      .from("notas")
-      .select(`
-        aluno_id,
-        media_trimestral,
-        disciplina:disciplinas!fk_notas_disciplina(id, nome)
-      `)
-      .in("aluno_id", alunoIds)
-      .eq("ano_lectivo_id", selectedAnoLectivo)
-      .eq("trimestre", parseInt(selectedTrimestre));
-
+    const { data: notas, error: notasError } = await getNotasQuery(alunoIds);
     if (notasError) throw notasError;
 
-    // Get all disciplines for the class
     const { data: disciplinasData, error: discError } = await supabase
       .from("disciplinas")
       .select("id, nome")
@@ -222,34 +248,48 @@ const RelatoriosPedagogicos = () => {
 
     if (discError) throw discError;
 
-    // Calculate stats per discipline
     const stats: DisciplinaStats[] = (disciplinasData || []).map(disc => {
       const alunosMatriculados = alunos?.filter(a => a.estado === "activo") || [];
       const matriculadosH = alunosMatriculados.filter(a => (a.profiles as any)?.sexo === "M").length;
       const matriculadosM = alunosMatriculados.filter(a => (a.profiles as any)?.sexo === "F").length;
       const matriculadosHM = alunosMatriculados.length;
 
-      const notasDisciplina = notas?.filter(n => (n.disciplina as any)?.id === disc.id) || [];
-      const notasComMedia = notasDisciplina.filter(n => n.media_trimestral !== null);
+      let avaliadosIds: string[] = [];
+      let notasParaCalculo: number[] = [];
 
-      const avaliadosIds = notasComMedia.map(n => n.aluno_id);
+      if (periodoType === "anual") {
+        // For annual, calculate average across trimesters per student
+        alunosMatriculados.forEach(aluno => {
+          const avgMedia = calculateAnnualAverage(notas || [], disc.id, aluno.id);
+          if (avgMedia !== null) {
+            avaliadosIds.push(aluno.id);
+            notasParaCalculo.push(avgMedia);
+          }
+        });
+      } else {
+        const notasDisciplina = notas?.filter(n => (n.disciplina as any)?.id === disc.id) || [];
+        const notasComMedia = notasDisciplina.filter(n => n.media_trimestral !== null);
+        avaliadosIds = notasComMedia.map(n => n.aluno_id);
+        notasParaCalculo = notasComMedia.map(n => n.media_trimestral!);
+      }
+
       const alunosAvaliados = alunos?.filter(a => avaliadosIds.includes(a.id)) || [];
       const avaliadosM = alunosAvaliados.filter(a => (a.profiles as any)?.sexo === "F").length;
-      const avaliadosHM = alunosAvaliados.length;
+      const avaliadosHM = [...new Set(avaliadosIds)].length;
 
-      const notasPositivas = notasComMedia.filter(n => (n.media_trimestral || 0) >= 10);
-      const positivosIds = notasPositivas.map(n => n.aluno_id);
-      const alunosPositivos = alunos?.filter(a => positivosIds.includes(a.id)) || [];
-      const positivosH = alunosPositivos.filter(a => (a.profiles as any)?.sexo === "M").length;
-      const positivosM = alunosPositivos.filter(a => (a.profiles as any)?.sexo === "F").length;
-      const positivosHM = alunosPositivos.length;
+      const notasPositivas = notasParaCalculo.filter(m => m >= 10);
+      const alunosPositivosIds = avaliadosIds.filter((_, idx) => notasParaCalculo[idx] >= 10);
+      const alunosPositivos = alunos?.filter(a => alunosPositivosIds.includes(a.id)) || [];
+      const positivosH = [...new Set(alunosPositivos.filter(a => (a.profiles as any)?.sexo === "M").map(a => a.id))].length;
+      const positivosM = [...new Set(alunosPositivos.filter(a => (a.profiles as any)?.sexo === "F").map(a => a.id))].length;
+      const positivosHM = [...new Set(alunosPositivosIds)].length;
 
-      const escala_0_9 = notasComMedia.filter(n => (n.media_trimestral || 0) < 10).length;
-      const escala_10_13 = notasComMedia.filter(n => (n.media_trimestral || 0) >= 10 && (n.media_trimestral || 0) <= 13).length;
-      const escala_14_20 = notasComMedia.filter(n => (n.media_trimestral || 0) >= 14).length;
+      const escala_0_9 = notasParaCalculo.filter(m => m < 10).length;
+      const escala_10_13 = notasParaCalculo.filter(m => m >= 10 && m <= 13).length;
+      const escala_14_20 = notasParaCalculo.filter(m => m >= 14).length;
 
-      const somaTotal = notasComMedia.reduce((acc, n) => acc + (n.media_trimestral || 0), 0);
-      const notaMedia = notasComMedia.length > 0 ? somaTotal / notasComMedia.length : 0;
+      const somaTotal = notasParaCalculo.reduce((acc, m) => acc + m, 0);
+      const notaMedia = notasParaCalculo.length > 0 ? somaTotal / notasParaCalculo.length : 0;
 
       return {
         nome: disc.nome,
@@ -292,12 +332,17 @@ const RelatoriosPedagogicos = () => {
       
       let notasData: any[] = [];
       if (alunoIds.length > 0) {
-        const { data: notas } = await supabase
+        let query = supabase
           .from("notas")
-          .select("aluno_id, media_trimestral")
+          .select("aluno_id, trimestre, media_trimestral")
           .in("aluno_id", alunoIds)
-          .eq("ano_lectivo_id", selectedAnoLectivo)
-          .eq("trimestre", parseInt(selectedTrimestre));
+          .eq("ano_lectivo_id", selectedAnoLectivo);
+
+        if (periodoType === "trimestral") {
+          query = query.eq("trimestre", parseInt(selectedTrimestre));
+        }
+
+        const { data: notas } = await query;
         notasData = notas || [];
       }
 
@@ -313,27 +358,55 @@ const RelatoriosPedagogicos = () => {
       const transferidosM = transferidos.filter(a => (a.profiles as any)?.sexo === "F").length;
       const transferidosHM = transferidos.length;
 
-      // PDF (Passados por Defunto) - assumindo que é um estado específico
       const pdf = allAlunos.filter(a => a.estado === "obito");
       const pdfM = pdf.filter(a => (a.profiles as any)?.sexo === "F").length;
       const pdfHM = pdf.length;
 
-      // Students with grades
-      const alunosComNotas = new Set(notasData.filter(n => n.media_trimestral !== null).map(n => n.aluno_id));
+      // Calculate student averages
+      const alunoMedias = new Map<string, number[]>();
+      
+      if (periodoType === "anual") {
+        // Group by student and trimester, then average
+        const alunoTrimestreMedias = new Map<string, Map<number, number[]>>();
+        notasData.forEach(n => {
+          if (n.media_trimestral !== null) {
+            if (!alunoTrimestreMedias.has(n.aluno_id)) {
+              alunoTrimestreMedias.set(n.aluno_id, new Map());
+            }
+            const trimestreMap = alunoTrimestreMedias.get(n.aluno_id)!;
+            if (!trimestreMap.has(n.trimestre)) {
+              trimestreMap.set(n.trimestre, []);
+            }
+            trimestreMap.get(n.trimestre)!.push(n.media_trimestral);
+          }
+        });
+        
+        alunoTrimestreMedias.forEach((trimestreMap, alunoId) => {
+          const annualMedias: number[] = [];
+          trimestreMap.forEach(medias => {
+            const avgTrimestre = medias.reduce((a, b) => a + b, 0) / medias.length;
+            annualMedias.push(avgTrimestre);
+          });
+          if (annualMedias.length > 0) {
+            const avgAnual = annualMedias.reduce((a, b) => a + b, 0) / annualMedias.length;
+            alunoMedias.set(alunoId, [avgAnual]);
+          }
+        });
+      } else {
+        notasData.forEach(n => {
+          if (n.media_trimestral !== null) {
+            if (!alunoMedias.has(n.aluno_id)) {
+              alunoMedias.set(n.aluno_id, []);
+            }
+            alunoMedias.get(n.aluno_id)!.push(n.media_trimestral);
+          }
+        });
+      }
+
+      const alunosComNotas = new Set(alunoMedias.keys());
       const avaliadosAlunos = allAlunos.filter(a => alunosComNotas.has(a.id));
       const avaliadosM = avaliadosAlunos.filter(a => (a.profiles as any)?.sexo === "F").length;
       const avaliadosHM = avaliadosAlunos.length;
-
-      // Calculate positive students (average >= 10 across all disciplines)
-      const alunoMedias = new Map<string, number[]>();
-      notasData.forEach(n => {
-        if (n.media_trimestral !== null) {
-          if (!alunoMedias.has(n.aluno_id)) {
-            alunoMedias.set(n.aluno_id, []);
-          }
-          alunoMedias.get(n.aluno_id)!.push(n.media_trimestral);
-        }
-      });
 
       const positivosAlunos = allAlunos.filter(a => {
         const medias = alunoMedias.get(a.id);
@@ -386,47 +459,51 @@ const RelatoriosPedagogicos = () => {
       return;
     }
 
-    const { data: notas, error: notasError } = await supabase
-      .from("notas")
-      .select(`
-        aluno_id,
-        nota_as1,
-        nota_as2,
-        nota_as3,
-        nota_at,
-        media_as,
-        media_trimestral,
-        disciplina:disciplinas!fk_notas_disciplina(nome)
-      `)
-      .in("aluno_id", alunoIds)
-      .eq("ano_lectivo_id", selectedAnoLectivo)
-      .eq("trimestre", parseInt(selectedTrimestre));
-
+    const { data: notas, error: notasError } = await getNotasQuery(alunoIds);
     if (notasError) throw notasError;
 
-    // Get unique disciplines
     const uniqueDisciplinas = [...new Set(notas?.map(n => (n.disciplina as any)?.nome).filter(Boolean))].sort();
     setDisciplinas(uniqueDisciplinas);
 
-    // Build verbetes data
     const verbetes: AlunoNota[] = (alunos || []).map(aluno => {
       const alunoNotas = notas?.filter(n => n.aluno_id === aluno.id) || [];
+      
       return {
         id: aluno.id,
         nome: (aluno.profiles as any)?.nome_completo || "N/A",
         sexo: (aluno.profiles as any)?.sexo === "F" ? "F" : "M",
         estado: aluno.estado || "activo",
         notas: uniqueDisciplinas.map(disc => {
-          const nota = alunoNotas.find(n => (n.disciplina as any)?.nome === disc);
-          return {
-            disciplina: disc,
-            nota_as1: nota?.nota_as1 ?? null,
-            nota_as2: nota?.nota_as2 ?? null,
-            nota_as3: nota?.nota_as3 ?? null,
-            nota_at: nota?.nota_at ?? null,
-            media_as: nota?.media_as ?? null,
-            media_trimestral: nota?.media_trimestral ?? null,
-          };
+          const notasDisciplina = alunoNotas.filter(n => (n.disciplina as any)?.nome === disc);
+          
+          if (periodoType === "anual" && notasDisciplina.length > 0) {
+            // Calculate annual averages
+            const avg = (field: string) => {
+              const values = notasDisciplina.map(n => (n as any)[field]).filter((v: any) => v !== null);
+              return values.length > 0 ? values.reduce((a: number, b: number) => a + b, 0) / values.length : null;
+            };
+            
+            return {
+              disciplina: disc,
+              nota_as1: avg("nota_as1"),
+              nota_as2: avg("nota_as2"),
+              nota_as3: avg("nota_as3"),
+              nota_at: avg("nota_at"),
+              media_as: avg("media_as"),
+              media_trimestral: avg("media_trimestral"),
+            };
+          } else {
+            const nota = notasDisciplina[0];
+            return {
+              disciplina: disc,
+              nota_as1: nota?.nota_as1 ?? null,
+              nota_as2: nota?.nota_as2 ?? null,
+              nota_as3: nota?.nota_as3 ?? null,
+              nota_at: nota?.nota_at ?? null,
+              media_as: nota?.media_as ?? null,
+              media_trimestral: nota?.media_trimestral ?? null,
+            };
+          }
         }),
       };
     }).sort((a, b) => a.nome.localeCompare(b.nome));
@@ -434,9 +511,15 @@ const RelatoriosPedagogicos = () => {
     setVerbetesData(verbetes);
   };
 
+  const getPeriodoLabel = () => {
+    if (periodoType === "anual") return "Anual";
+    return `${selectedTrimestre}º Trimestre`;
+  };
+
   const handleExportExcel = async () => {
     const turmaInfo = turmas.find(t => t.id === selectedTurma);
     const anoInfo = anosLectivos.find(a => a.id === selectedAnoLectivo);
+    const periodoLabel = getPeriodoLabel();
     
     let exportData: any[] = [];
     let columns: any[] = [];
@@ -473,7 +556,7 @@ const RelatoriosPedagogicos = () => {
         { header: "Soma Total", key: "soma_total", width: 12 },
         { header: "Nota Média", key: "nota_media", width: 12 },
       ];
-      filename = `Aproveitamento_Disciplina_${turmaInfo?.nome || 'Turma'}_${selectedTrimestre}T_${anoInfo?.ano || ''}`;
+      filename = `Aproveitamento_Disciplina_${turmaInfo?.nome || 'Turma'}_${periodoLabel}_${anoInfo?.ano || ''}`;
     } else if (reportType === "aproveitamento_geral") {
       exportData = turmaStats.map(t => ({
         turma: `${t.classe}ª ${t.turma}`,
@@ -507,7 +590,7 @@ const RelatoriosPedagogicos = () => {
         { header: "Positivos (HM)", key: "positivos_hm", width: 14 },
         { header: "% Positivos", key: "percentagem_positivos", width: 12 },
       ];
-      filename = `Aproveitamento_Geral_${selectedTrimestre}T_${anoInfo?.ano || ''}`;
+      filename = `Aproveitamento_Geral_${periodoLabel}_${anoInfo?.ano || ''}`;
     } else if (reportType === "verbetes") {
       exportData = verbetesData.map(aluno => {
         const row: any = {
@@ -515,10 +598,10 @@ const RelatoriosPedagogicos = () => {
           sexo: aluno.sexo,
         };
         aluno.notas.forEach(nota => {
-          row[`${nota.disciplina}_AS1`] = nota.nota_as1 ?? "-";
-          row[`${nota.disciplina}_AS2`] = nota.nota_as2 ?? "-";
-          row[`${nota.disciplina}_AS3`] = nota.nota_as3 ?? "-";
-          row[`${nota.disciplina}_AT`] = nota.nota_at ?? "-";
+          row[`${nota.disciplina}_AS1`] = nota.nota_as1?.toFixed(1) ?? "-";
+          row[`${nota.disciplina}_AS2`] = nota.nota_as2?.toFixed(1) ?? "-";
+          row[`${nota.disciplina}_AS3`] = nota.nota_as3?.toFixed(1) ?? "-";
+          row[`${nota.disciplina}_AT`] = nota.nota_at?.toFixed(1) ?? "-";
           row[`${nota.disciplina}_Media`] = nota.media_trimestral?.toFixed(1) ?? "-";
         });
         return row;
@@ -534,7 +617,7 @@ const RelatoriosPedagogicos = () => {
         columns.push({ header: `${disc} AT`, key: `${disc}_AT`, width: 8 });
         columns.push({ header: `${disc} Média`, key: `${disc}_Media`, width: 10 });
       });
-      filename = `Verbetes_${turmaInfo?.nome || 'Turma'}_${selectedTrimestre}T_${anoInfo?.ano || ''}`;
+      filename = `Verbetes_${turmaInfo?.nome || 'Turma'}_${periodoLabel}_${anoInfo?.ano || ''}`;
     }
 
     if (exportData.length === 0) {
@@ -566,11 +649,60 @@ const RelatoriosPedagogicos = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    const turmaInfo = turmas.find(t => t.id === selectedTurma);
+    const anoInfo = anosLectivos.find(a => a.id === selectedAnoLectivo);
+    const periodoLabel = getPeriodoLabel();
+
+    const reportInfo = {
+      reportType,
+      periodo: periodoLabel,
+      anoLectivo: anoInfo?.ano || "",
+      turma: turmaInfo?.nome,
+      classe: turmaInfo?.classe,
+    };
+
+    let result: { success: boolean; path?: string; error?: string };
+
+    if (reportType === "aproveitamento_disciplina") {
+      if (disciplinaStats.length === 0) {
+        toast({ title: "Sem dados", description: "Não há dados para exportar.", variant: "destructive" });
+        return;
+      }
+      result = await generateAproveitamentoDisciplinaPDF(disciplinaStats, reportInfo);
+    } else if (reportType === "aproveitamento_geral") {
+      if (turmaStats.length === 0) {
+        toast({ title: "Sem dados", description: "Não há dados para exportar.", variant: "destructive" });
+        return;
+      }
+      result = await generateAproveitamentoGeralPDF(turmaStats, reportInfo);
+    } else {
+      if (verbetesData.length === 0) {
+        toast({ title: "Sem dados", description: "Não há dados para exportar.", variant: "destructive" });
+        return;
+      }
+      result = await generateVerbetesPDF(verbetesData, disciplinas, reportInfo);
+    }
+
+    if (result.success) {
+      toast({
+        title: "PDF Gerado",
+        description: result.path ? "Ficheiro PDF guardado com sucesso." : "Ficheiro PDF gerado com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Erro",
+        description: result.error || "Não foi possível gerar o PDF.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const renderAproveitamentoDisciplina = () => (
     <Card>
       <CardHeader>
         <CardTitle>Mapa de Aproveitamento Pedagógico por Disciplina</CardTitle>
-        <CardDescription>Estatísticas detalhadas por disciplina</CardDescription>
+        <CardDescription>Estatísticas detalhadas por disciplina - {getPeriodoLabel()}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -629,7 +761,7 @@ const RelatoriosPedagogicos = () => {
     <Card>
       <CardHeader>
         <CardTitle>Mapa de Aproveitamento Pedagógico Geral</CardTitle>
-        <CardDescription>Estatísticas gerais por turma</CardDescription>
+        <CardDescription>Estatísticas gerais por turma - {getPeriodoLabel()}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -690,7 +822,7 @@ const RelatoriosPedagogicos = () => {
     <Card>
       <CardHeader>
         <CardTitle>Verbetes</CardTitle>
-        <CardDescription>Notas detalhadas por aluno e disciplina</CardDescription>
+        <CardDescription>Notas detalhadas por aluno e disciplina - {getPeriodoLabel()}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -733,10 +865,10 @@ const RelatoriosPedagogicos = () => {
                     <TableCell className="text-center">{aluno.sexo}</TableCell>
                     {aluno.notas.map((nota, nIdx) => (
                       <>
-                        <TableCell key={`${aluno.id}-${nIdx}-as1`} className="text-center border-l">{nota.nota_as1 ?? "-"}</TableCell>
-                        <TableCell key={`${aluno.id}-${nIdx}-as2`} className="text-center">{nota.nota_as2 ?? "-"}</TableCell>
-                        <TableCell key={`${aluno.id}-${nIdx}-as3`} className="text-center">{nota.nota_as3 ?? "-"}</TableCell>
-                        <TableCell key={`${aluno.id}-${nIdx}-at`} className="text-center">{nota.nota_at ?? "-"}</TableCell>
+                        <TableCell key={`${aluno.id}-${nIdx}-as1`} className="text-center border-l">{nota.nota_as1?.toFixed(1) ?? "-"}</TableCell>
+                        <TableCell key={`${aluno.id}-${nIdx}-as2`} className="text-center">{nota.nota_as2?.toFixed(1) ?? "-"}</TableCell>
+                        <TableCell key={`${aluno.id}-${nIdx}-as3`} className="text-center">{nota.nota_as3?.toFixed(1) ?? "-"}</TableCell>
+                        <TableCell key={`${aluno.id}-${nIdx}-at`} className="text-center">{nota.nota_at?.toFixed(1) ?? "-"}</TableCell>
                         <TableCell 
                           key={`${aluno.id}-${nIdx}-media`} 
                           className={`text-center font-bold ${nota.media_trimestral !== null ? (nota.media_trimestral >= 10 ? 'text-success' : 'text-destructive') : ''}`}
@@ -778,10 +910,16 @@ const RelatoriosPedagogicos = () => {
               <p className="text-muted-foreground">Visualizar estatísticas de aproveitamento</p>
             </div>
           </div>
-          <Button onClick={handleExportExcel}>
-            <FileSpreadsheet className="h-4 w-4 mr-2" />
-            Exportar Excel
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExportPDF}>
+              <FileText className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
+            <Button onClick={handleExportExcel}>
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Excel
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -790,7 +928,7 @@ const RelatoriosPedagogicos = () => {
             <CardDescription>Selecione os parâmetros do relatório</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tipo de Relatório</label>
                 <Select value={reportType} onValueChange={(v) => setReportType(v as ReportType)}>
@@ -840,18 +978,33 @@ const RelatoriosPedagogicos = () => {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Trimestre</label>
-                <Select value={selectedTrimestre} onValueChange={setSelectedTrimestre}>
+                <label className="text-sm font-medium">Período</label>
+                <Select value={periodoType} onValueChange={(v) => setPeriodoType(v as PeriodoType)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o trimestre" />
+                    <SelectValue placeholder="Selecione o período" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1º Trimestre</SelectItem>
-                    <SelectItem value="2">2º Trimestre</SelectItem>
-                    <SelectItem value="3">3º Trimestre</SelectItem>
+                    <SelectItem value="trimestral">Trimestral</SelectItem>
+                    <SelectItem value="anual">Anual</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {periodoType === "trimestral" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Trimestre</label>
+                  <Select value={selectedTrimestre} onValueChange={setSelectedTrimestre}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o trimestre" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1º Trimestre</SelectItem>
+                      <SelectItem value="2">2º Trimestre</SelectItem>
+                      <SelectItem value="3">3º Trimestre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
