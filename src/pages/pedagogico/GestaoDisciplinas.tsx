@@ -54,7 +54,6 @@ interface Disciplina {
   id: string;
   nome: string;
   codigo: string;
-  classe: number;
   carga_horaria: number | null;
   descricao: string | null;
 }
@@ -70,13 +69,11 @@ const GestaoDisciplinas = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingDisciplina, setEditingDisciplina] = useState<Disciplina | null>(null);
   const [disciplinaToDelete, setDisciplinaToDelete] = useState<string | null>(null);
-  const [filtroClasse, setFiltroClasse] = useState<string>("todos");
   const [searchTerm, setSearchTerm] = useState("");
 
   const [formData, setFormData] = useState({
     nome: "",
     codigo: "",
-    classe: 7,
     carga_horaria: 0,
     descricao: "",
   });
@@ -99,7 +96,6 @@ const GestaoDisciplinas = () => {
       const { data, error } = await supabase
         .from("disciplinas")
         .select("*")
-        .order("classe", { ascending: true })
         .order("nome", { ascending: true });
 
       if (error) throw error;
@@ -134,7 +130,6 @@ const GestaoDisciplinas = () => {
           .update({
             nome: formData.nome,
             codigo: formData.codigo,
-            classe: formData.classe,
             carga_horaria: formData.carga_horaria || null,
             descricao: formData.descricao || null,
           })
@@ -150,7 +145,6 @@ const GestaoDisciplinas = () => {
         const { error } = await supabase.from("disciplinas").insert({
           nome: formData.nome,
           codigo: formData.codigo,
-          classe: formData.classe,
           carga_horaria: formData.carga_horaria || null,
           descricao: formData.descricao || null,
         });
@@ -180,7 +174,6 @@ const GestaoDisciplinas = () => {
     setFormData({
       nome: disciplina.nome,
       codigo: disciplina.codigo,
-      classe: disciplina.classe,
       carga_horaria: disciplina.carga_horaria || 0,
       descricao: disciplina.descricao || "",
     });
@@ -224,7 +217,6 @@ const GestaoDisciplinas = () => {
     setFormData({
       nome: "",
       codigo: "",
-      classe: 7,
       carga_horaria: 0,
       descricao: "",
     });
@@ -237,17 +229,11 @@ const GestaoDisciplinas = () => {
   };
 
   const filteredDisciplinas = disciplinas.filter((d) => {
-    const matchesClasse = filtroClasse === "todos" || d.classe === parseInt(filtroClasse);
     const matchesSearch =
       d.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.codigo.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesClasse && matchesSearch;
+    return matchesSearch;
   });
-
-  const disciplinasPorClasse = disciplinas.reduce((acc, d) => {
-    acc[d.classe] = (acc[d.classe] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
 
   if (loading) {
     return (
@@ -286,60 +272,26 @@ const GestaoDisciplinas = () => {
         </div>
 
         {/* Estatísticas */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Disciplinas</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{disciplinas.length}</div>
-            </CardContent>
-          </Card>
-          {[7, 8, 9, 10, 11, 12].slice(0, 3).map((classe) => (
-            <Card key={classe}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{classe}ª Classe</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{disciplinasPorClasse[classe] || 0}</div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Filtros */}
         <Card>
-          <CardHeader>
-            <CardTitle>Filtros</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Disciplinas</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Pesquisar disciplina..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-64"
-                />
-              </div>
-              <Select value={filtroClasse} onValueChange={setFiltroClasse}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Classe" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todas as Classes</SelectItem>
-                  {[7, 8, 9, 10, 11, 12].map((classe) => (
-                    <SelectItem key={classe} value={classe.toString()}>
-                      {classe}ª Classe
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="text-2xl font-bold">{disciplinas.length}</div>
           </CardContent>
         </Card>
+
+        {/* Pesquisa */}
+        <div className="flex items-center gap-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Pesquisar disciplina..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-64"
+          />
+        </div>
 
         {/* Tabela */}
         <Card>
@@ -362,7 +314,6 @@ const GestaoDisciplinas = () => {
                   <TableRow>
                     <TableHead>Código</TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Classe</TableHead>
                     <TableHead>Carga Horária</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
@@ -373,7 +324,6 @@ const GestaoDisciplinas = () => {
                     <TableRow key={disciplina.id}>
                       <TableCell className="font-medium">{disciplina.codigo}</TableCell>
                       <TableCell>{disciplina.nome}</TableCell>
-                      <TableCell>{disciplina.classe}ª</TableCell>
                       <TableCell>
                         {disciplina.carga_horaria ? `${disciplina.carga_horaria}h` : "-"}
                       </TableCell>
@@ -420,40 +370,18 @@ const GestaoDisciplinas = () => {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="codigo">Código *</Label>
-                  <Input
-                    id="codigo"
-                    value={formData.codigo}
-                    onChange={(e) =>
-                      setFormData({ ...formData, codigo: e.target.value.toUpperCase() })
-                    }
-                    placeholder="Ex: MAT, POR"
-                    maxLength={10}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="classe">Classe *</Label>
-                  <Select
-                    value={formData.classe.toString()}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, classe: parseInt(value) })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[7, 8, 9, 10, 11, 12].map((classe) => (
-                        <SelectItem key={classe} value={classe.toString()}>
-                          {classe}ª Classe
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="codigo">Código *</Label>
+                <Input
+                  id="codigo"
+                  value={formData.codigo}
+                  onChange={(e) =>
+                    setFormData({ ...formData, codigo: e.target.value.toUpperCase() })
+                  }
+                  placeholder="Ex: MAT, POR"
+                  maxLength={10}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="nome">Nome da Disciplina *</Label>
