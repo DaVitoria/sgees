@@ -22,6 +22,7 @@ const atribuicaoSchema = z.object({
   disciplina_id: z.string().min(1, "Selecione uma disciplina"),
   turma_id: z.string().min(1, "Selecione uma turma"),
   ano_lectivo_id: z.string().min(1, "Selecione um ano letivo"),
+  nr_pasta: z.coerce.number().int().positive("Número da pasta deve ser positivo").optional().nullable(),
 });
 
 type AtribuicaoFormData = z.infer<typeof atribuicaoSchema>;
@@ -50,6 +51,7 @@ const AtribuicaoDisciplinas = () => {
       disciplina_id: "",
       turma_id: "",
       ano_lectivo_id: "",
+      nr_pasta: null,
     },
   });
 
@@ -125,6 +127,7 @@ const AtribuicaoDisciplinas = () => {
         disciplina_id: data.disciplina_id,
         turma_id: data.turma_id,
         ano_lectivo_id: data.ano_lectivo_id,
+        nr_pasta: data.nr_pasta || null,
       };
 
       const { error } = await supabase.from("professor_disciplinas").insert([atribuicaoData]);
@@ -330,6 +333,24 @@ const AtribuicaoDisciplinas = () => {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="nr_pasta"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nº da Pasta</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Ex: 1, 2, 3..."
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <DialogFooter>
                     <Button type="submit">Atribuir</Button>
                   </DialogFooter>
@@ -398,13 +419,14 @@ const AtribuicaoDisciplinas = () => {
                   <TableHead>Disciplina</TableHead>
                   <TableHead>Turma</TableHead>
                   <TableHead>Ano Letivo</TableHead>
+                  <TableHead>Nº Pasta</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {atribuicoesFiltradas.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
                       {atribuicoes.length === 0 
                         ? "Nenhuma atribuição registada" 
                         : "Nenhuma atribuição encontrada com os filtros aplicados"}
@@ -421,6 +443,7 @@ const AtribuicaoDisciplinas = () => {
                       </TableCell>
                       <TableCell>{atrib.turmas?.nome}</TableCell>
                       <TableCell>{atrib.anos_lectivos?.ano}</TableCell>
+                      <TableCell>{atrib.nr_pasta || "-"}</TableCell>
                       <TableCell className="text-right">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

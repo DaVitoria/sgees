@@ -876,6 +876,7 @@ export type Database = {
           created_at: string | null
           disciplina_id: string
           id: string
+          nr_pasta: number | null
           professor_id: string
           turma_id: string
         }
@@ -884,6 +885,7 @@ export type Database = {
           created_at?: string | null
           disciplina_id: string
           id?: string
+          nr_pasta?: number | null
           professor_id: string
           turma_id: string
         }
@@ -892,6 +894,7 @@ export type Database = {
           created_at?: string | null
           disciplina_id?: string
           id?: string
+          nr_pasta?: number | null
           professor_id?: string
           turma_id?: string
         }
