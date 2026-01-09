@@ -22,6 +22,70 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Verify authentication - require Authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.log("Missing or invalid Authorization header");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Create client with the provided auth token to verify caller
+    const supabaseAuth = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify the JWT token and get claims
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.log("Invalid JWT token:", claimsError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    console.log(`Authenticated user: ${userId}`);
+
+    // Check if user has admin or secretario role
+    const supabaseService = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const { data: userRoles, error: rolesError } = await supabaseService
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+
+    if (rolesError) {
+      console.error("Error fetching user roles:", rolesError);
+      return new Response(
+        JSON.stringify({ error: "Failed to verify authorization" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const allowedRoles = ["admin", "secretario"];
+    const hasPermission = userRoles?.some(r => allowedRoles.includes(r.role));
+
+    if (!hasPermission) {
+      console.log(`User ${userId} does not have required role. Roles: ${userRoles?.map(r => r.role).join(", ")}`);
+      return new Response(
+        JSON.stringify({ error: "Forbidden - Insufficient permissions" }),
+        { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log(`User ${userId} authorized with roles: ${userRoles?.map(r => r.role).join(", ")}`);
+
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     if (!RESEND_API_KEY) {
       console.log("RESEND_API_KEY not configured, skipping email");
@@ -31,10 +95,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    // Use service role client for database operations
+    const supabase = supabaseService;
 
     const { aluno_id, status, turma_id, observacoes }: EnrollmentNotificationRequest = await req.json();
     
