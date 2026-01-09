@@ -9,6 +9,44 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
+const MAX_REQUESTS_PER_WINDOW = 50; // Max 50 requests per minute (for batch grade notifications)
+
+// In-memory rate limit store (resets on function cold start)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function checkRateLimit(identifier: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const record = rateLimitStore.get(identifier);
+
+  if (!record || now > record.resetTime) {
+    // New window or expired - reset
+    rateLimitStore.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true };
+  }
+
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+    const retryAfter = Math.ceil((record.resetTime - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+
+  // Increment count
+  record.count++;
+  rateLimitStore.set(identifier, record);
+  return { allowed: true };
+}
+
+// Clean up old entries periodically
+function cleanupRateLimitStore() {
+  const now = Date.now();
+  for (const [key, value] of rateLimitStore.entries()) {
+    if (now > value.resetTime) {
+      rateLimitStore.delete(key);
+    }
+  }
+}
+
 interface GradeNotificationRequest {
   aluno_id: string;
   disciplina_id: string;
@@ -23,6 +61,35 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Get IP or use a fallback identifier for rate limiting
+    // For database triggers, we use a global rate limit
+    const clientIP = req.headers.get("x-forwarded-for") || 
+                     req.headers.get("x-real-ip") || 
+                     "database-trigger";
+    
+    // Apply rate limiting
+    const rateLimitResult = checkRateLimit(`grade-notification:${clientIP}`);
+    if (!rateLimitResult.allowed) {
+      console.log(`Rate limit exceeded for ${clientIP}`);
+      return new Response(
+        JSON.stringify({ 
+          error: "Too many requests. Please try again later.",
+          retryAfter: rateLimitResult.retryAfter 
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json",
+            "Retry-After": String(rateLimitResult.retryAfter)
+          } 
+        }
+      );
+    }
+
+    // Cleanup old rate limit entries periodically
+    cleanupRateLimitStore();
+
     const { aluno_id, disciplina_id, trimestre, tipo }: GradeNotificationRequest = await req.json();
 
     console.log("Received grade notification request:", { aluno_id, disciplina_id, trimestre, tipo });
