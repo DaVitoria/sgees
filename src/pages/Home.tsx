@@ -188,7 +188,7 @@ const Home = () => {
               <div className="inline-block p-3 sm:p-4 rounded-2xl bg-white/10 backdrop-blur">
                 <GraduationCap className="h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16" />
               </div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">Bem-vindo à Nossa Escola Secundária</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">Bem-vindo Escola Secundária de Chalala</h1>
               <p className="text-sm sm:text-base lg:text-lg text-white/90">Construindo o futuro de Moçambique através da educação de excelência.</p>
               <div className="flex flex-wrap gap-3 sm:gap-4 justify-center lg:justify-start">
                 <Button size="lg" variant="secondary" onClick={() => navigate("/login")} className="text-sm sm:text-base">Aceder ao Sistema</Button>
