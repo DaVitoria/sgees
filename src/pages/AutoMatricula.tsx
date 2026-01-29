@@ -148,6 +148,33 @@ const AutoMatricula = () => {
         return;
       }
 
+      // Get current user email to check for duplicates in profiles
+      const { data: currentProfile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", user?.id)
+        .single();
+
+      // If email is different from current, check for duplicates
+      if (currentProfile?.email) {
+        const { data: duplicateEmail } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", currentProfile.email)
+          .neq("id", user?.id)
+          .maybeSingle();
+
+        if (duplicateEmail) {
+          toast({
+            title: "E-mail já em uso",
+            description: "Este e-mail já está registrado no sistema.",
+            variant: "destructive",
+          });
+          setSubmitting(false);
+          return;
+        }
+      }
+
       // Update profile
       const { error: profileError } = await supabase
         .from("profiles")
@@ -161,7 +188,19 @@ const AutoMatricula = () => {
         })
         .eq("id", user?.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        // Handle unique constraint violation for email
+        if (profileError.code === '23505' && profileError.message.includes('email')) {
+          toast({
+            title: "E-mail já em uso",
+            description: "Este e-mail já está registrado no sistema.",
+            variant: "destructive",
+          });
+          setSubmitting(false);
+          return;
+        }
+        throw profileError;
+      }
 
       // Generate matricula number
       const { data: numeroData, error: numeroError } = await supabase
