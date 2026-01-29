@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserPlus, Loader2, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { z } from "zod";
@@ -32,6 +33,7 @@ const AutoMatricula = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [hasExistingEnrollment, setHasExistingEnrollment] = useState(false);
   const [anosLectivos, setAnosLectivos] = useState<any[]>([]);
@@ -74,8 +76,36 @@ const AutoMatricula = () => {
     if (user) {
       checkExistingEnrollment();
       fetchAnosLectivos();
+      loadUserProfile();
     }
   }, [user, userRole, authLoading]);
+
+  const loadUserProfile = async () => {
+    setLoadingProfile(true);
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("nome_completo, bi, data_nascimento, telefone, endereco, sexo")
+        .eq("id", user?.id)
+        .single();
+
+      if (profile) {
+        setFormData(prev => ({
+          ...prev,
+          nome_completo: profile.nome_completo || "",
+          bi: profile.bi || "",
+          data_nascimento: profile.data_nascimento || "",
+          telefone: profile.telefone || "",
+          endereco: profile.endereco || "",
+          sexo: profile.sexo || "",
+        }));
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const checkExistingEnrollment = async () => {
     try {
@@ -333,75 +363,98 @@ const AutoMatricula = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="nome_completo">Nome Completo *</Label>
-                  <Input
-                    id="nome_completo"
-                    value={formData.nome_completo}
-                    onChange={(e) => {
-                      setFormData({ ...formData, nome_completo: e.target.value });
-                      setValidationErrors({ ...validationErrors, nome_completo: '' });
-                    }}
-                    required
-                    className={validationErrors.nome_completo ? 'border-red-500' : ''}
-                  />
+                  {loadingProfile ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Input
+                      id="nome_completo"
+                      value={formData.nome_completo}
+                      onChange={(e) => {
+                        setFormData({ ...formData, nome_completo: e.target.value });
+                        setValidationErrors({ ...validationErrors, nome_completo: '' });
+                      }}
+                      required
+                      className={validationErrors.nome_completo ? 'border-red-500' : ''}
+                    />
+                  )}
                   {validationErrors.nome_completo && (
                     <p className="text-sm text-red-500">{validationErrors.nome_completo}</p>
                   )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="bi">Bilhete de Identidade *</Label>
-                  <Input
-                    id="bi"
-                    value={formData.bi}
-                    onChange={(e) => setFormData({ ...formData, bi: e.target.value })}
-                    required
-                  />
+                  {loadingProfile ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Input
+                      id="bi"
+                      value={formData.bi}
+                      onChange={(e) => setFormData({ ...formData, bi: e.target.value })}
+                      required
+                    />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="data_nascimento">Data de Nascimento *</Label>
-                  <Input
-                    id="data_nascimento"
-                    type="date"
-                    value={formData.data_nascimento}
-                    onChange={(e) => setFormData({ ...formData, data_nascimento: e.target.value })}
-                    required
-                  />
+                  {loadingProfile ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Input
+                      id="data_nascimento"
+                      type="date"
+                      value={formData.data_nascimento}
+                      onChange={(e) => setFormData({ ...formData, data_nascimento: e.target.value })}
+                      required
+                    />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="telefone">Telefone</Label>
-                  <Input
-                    id="telefone"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                    placeholder="+258 84 123 4567"
-                  />
+                  {loadingProfile ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Input
+                      id="telefone"
+                      value={formData.telefone}
+                      onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                      placeholder="+258 84 123 4567"
+                    />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sexo">Sexo *</Label>
-                  <Select
-                    value={formData.sexo}
-                    onValueChange={(value) => setFormData({ ...formData, sexo: value })}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o sexo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="H">Masculino</SelectItem>
-                      <SelectItem value="M">Feminino</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {loadingProfile ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Select
+                      value={formData.sexo}
+                      onValueChange={(value) => setFormData({ ...formData, sexo: value })}
+                      required
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o sexo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="H">Masculino</SelectItem>
+                        <SelectItem value="M">Feminino</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="endereco">Endereço</Label>
-                  <Input
-                    id="endereco"
-                    value={formData.endereco}
-                    onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                  />
+                  {loadingProfile ? (
+                    <Skeleton className="h-10 w-full" />
+                  ) : (
+                    <Input
+                      id="endereco"
+                      value={formData.endereco}
+                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                    />
+                  )}
                 </div>
               </div>
             </div>
-
             {/* Dados do Encarregado */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold border-b pb-2">Dados do Encarregado de Educação</h3>
