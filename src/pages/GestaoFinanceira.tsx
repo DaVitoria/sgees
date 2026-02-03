@@ -43,6 +43,7 @@ import { Plus, TrendingUp, TrendingDown, DollarSign, Filter, Clock, CreditCard }
 import { Badge } from "@/components/ui/badge";
 import { z } from "zod";
 import { ConfirmacaoPagamentos } from "@/components/financeiro/ConfirmacaoPagamentos";
+import { mapDatabaseError } from "@/utils/errorHandler";
 
 const transacaoSchema = z.object({
   tipo: z.enum(["entrada", "saida"]),
@@ -209,7 +210,7 @@ const GestaoFinanceira = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar transações",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     }
@@ -234,7 +235,7 @@ const GestaoFinanceira = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar alunos",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     }
@@ -309,7 +310,7 @@ const GestaoFinanceira = () => {
       } else {
         toast({
           title: "Erro ao registrar transação",
-          description: error.message,
+          description: mapDatabaseError(error),
           variant: "destructive",
         });
       }

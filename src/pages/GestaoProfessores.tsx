@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { mapDatabaseError } from "@/utils/errorHandler";
 
 const professorSchema = z.object({
   numero_funcionario: z.string().trim().min(1, "Número de funcionário é obrigatório").max(50, "Número muito longo"),
@@ -111,7 +112,7 @@ const GestaoProfessores = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar professores",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     } finally {
@@ -174,7 +175,7 @@ const GestaoProfessores = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar utilizadores disponíveis",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     } finally {
@@ -260,7 +261,7 @@ const GestaoProfessores = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao salvar professor",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     }
@@ -297,7 +298,7 @@ const GestaoProfessores = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao remover professor",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     }

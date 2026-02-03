@@ -42,6 +42,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus, Eye, Search } from "lucide-react";
 import { z } from "zod";
+import { mapDatabaseError, mapAuthError } from "@/utils/errorHandler";
 
 // Valores permitidos pelo check constraint alunos_estado_check
 const ESTADO_ALUNO_OPTIONS = [
@@ -194,7 +195,7 @@ const GestaoAlunos = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar alunos",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     }
@@ -213,7 +214,7 @@ const GestaoAlunos = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar turmas",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     }
@@ -249,7 +250,7 @@ const GestaoAlunos = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar histórico",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     }
@@ -405,7 +406,7 @@ const GestaoAlunos = () => {
       } else {
         toast({
           title: "Erro ao salvar aluno",
-          description: error.message,
+          description: mapAuthError(error),
           variant: "destructive",
         });
       }
@@ -465,7 +466,7 @@ const GestaoAlunos = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao remover aluno",
-        description: error.message,
+        description: mapDatabaseError(error),
         variant: "destructive",
       });
     }

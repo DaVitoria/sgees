@@ -61,6 +61,27 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // SECURITY: Validate shared secret for authentication
+    // This prevents unauthorized access to the email notification endpoint
+    const functionSecret = req.headers.get("x-function-secret");
+    const expectedSecret = Deno.env.get("FUNCTION_SECRET_KEY");
+    
+    if (!expectedSecret) {
+      console.error("FUNCTION_SECRET_KEY not configured");
+      return new Response(
+        JSON.stringify({ error: "Server configuration error" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (functionSecret !== expectedSecret) {
+      console.log("Unauthorized request - invalid or missing function secret");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Get IP or use a fallback identifier for rate limiting
     // For database triggers, we use a global rate limit
     const clientIP = req.headers.get("x-forwarded-for") || 
